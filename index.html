@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0b1220" />
-  <title>Бюджет ULTRA++ (Профили)</title>
+  <title>CashControl</title>
   <style>
     :root{
       --bg:#0b1220; --card:#101a33; --muted:#93a4c7; --text:#e7efff;
@@ -117,7 +117,7 @@
   <div class="overlay" id="profileOverlay">
     <header>
       <h1>👤 Профили</h1>
-      <div class="pill" id="overlayPill">ULTRA++</div>
+      <div class="pill" id="overlayPill">CashControl</div>
     </header>
 
     <div class="grid">
@@ -167,7 +167,7 @@
   <!-- MAIN APP -->
   <header>
     <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-      <h1>📱 Бюджет ULTRA++</h1>
+      <h1>📱 CashControl</h1>
       <div class="small" id="profileNameLine">Профил: —</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -307,7 +307,7 @@
   <section id="viewAuto" class="grid" style="display:none">
     <div class="card">
       <div class="label">Автоматични разходи (фикс)</div>
-      <div class="small">Попълнено по твоя бюджет. (можеш да променяш)</div>
+      <div class="small">Тук всеки потребител си попълва своите суми.</div>
       <div class="hr"></div>
 
       <div class="two">
@@ -376,10 +376,10 @@
   <section id="viewCredits" class="grid" style="display:none">
     <div class="card">
       <div class="label">Кредити – автоматично приспадане</div>
-      <div class="small">Кредит 1 е настроен да спира през Юни 2026 (можеш да го редактираш).</div>
+      <div class="small">Всеки потребител си добавя кредитите сам.</div>
       <div class="hr"></div>
 
-      <input id="crName" placeholder="Име (напр. Кредит 1)" />
+      <input id="crName" placeholder="Име (напр. Кредит)" />
       <div class="two" style="margin-top:10px">
         <input id="crPay" type="number" inputmode="decimal" placeholder="Месечна вноска (€)" />
         <select id="crMode">
@@ -521,8 +521,8 @@
     // =========================
     // PROFILE SYSTEM (LOCAL)
     // =========================
-    const PROFILES_KEY = "budget_ultra_profiles_v1";
-    const ACTIVE_PROFILE_KEY = "budget_ultra_active_profile_v1";
+    const PROFILES_KEY = "cashcontrol_profiles_v1";
+    const ACTIVE_PROFILE_KEY = "cashcontrol_active_profile_v1";
 
     const monthNamesBG = ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"];
     const fmt = new Intl.NumberFormat('bg-BG', { style:'currency', currency:'EUR' });
@@ -565,7 +565,7 @@
     function setActiveProfileId(id){
       localStorage.setItem(ACTIVE_PROFILE_KEY, id);
     }
-    function profileStoreKey(id){ return "budget_ultra_profile_state_v1__" + id; }
+    function profileStoreKey(id){ return "cashcontrol_profile_state_v1__" + id; }
 
     function loadStateForProfile(profileId){
       const key = profileStoreKey(profileId);
@@ -579,22 +579,20 @@
       localStorage.setItem(key, JSON.stringify(stateObj));
     }
 
+    // ✅ EMPTY DEFAULTS (няма суми, няма кредити)
     function defaultState(){
       const nowYM = ymNow();
       return {
-        settings:{ activeYM: nowYM, goal: 10000, startSavings: 0 },
-        plan:{ salary: 1350, vouchers: 100 },
+        settings:{ activeYM: nowYM, goal: 0, startSavings: 0 },
+        plan:{ salary: 0, vouchers: 0 },
         auto:{
-          utilities: 60, phone: 55, revolut: 14,
-          fuelPlan: 70, foodPlan: 60, includePlansAsAuto: "no",
-          insuranceAmount: 35, insuranceAnchorYM: nowYM,
+          utilities: 0, phone: 0, revolut: 0,
+          fuelPlan: 0, foodPlan: 0, includePlansAsAuto: "no",
+          insuranceAmount: 0, insuranceAnchorYM: nowYM,
           spendingLimit: 0, autoSaveTarget: 0
         },
-        car:{ limit: 200, fuelLimit: 100 },
-        credits:[
-          { id: uuid(), name:"Кредит 1 (до юни)", pay:125, startYM: nowYM, endYM:"2026-06", mode:"expense", note:"Автоматично до Юни 2026." },
-          { id: uuid(), name:"Кредит 2", pay:150, startYM: nowYM, endYM:null, mode:"expense", note:"Дългосрочен." }
-        ],
+        car:{ limit: 0, fuelLimit: 0 },
+        credits:[],   // ✅ няма кредити
         tx:[]
       };
     }
@@ -692,9 +690,7 @@
             if(confirm(`Да изтрия профил "${p.name}"? Това изтрива и всичките му данни.`)){
               const filtered = profiles.filter(x=>x.id!==id);
               saveProfiles(filtered);
-              // delete state
               localStorage.removeItem(profileStoreKey(id));
-              // if active
               if(getActiveProfileId()===id){
                 setActiveProfileId("");
                 activeProfile=null;
@@ -738,7 +734,6 @@
       profiles.push(p);
       saveProfiles(profiles);
 
-      // init state
       saveStateForProfile(id, defaultState());
 
       await activateProfile(id);
@@ -765,14 +760,12 @@
       const p = profiles.find(x=>x.id===id);
       if(!p){ alert("Профилът липсва."); return; }
 
-      // load or init state
       let s = loadStateForProfile(id);
       if(!s){
         s = defaultState();
         saveStateForProfile(id, s);
       }
 
-      // update last used
       const today = new Date().toISOString().slice(0,10);
       p.lastUsed = today;
       saveProfiles(profiles);
@@ -794,14 +787,12 @@
         const text = await f.text();
         const parsed = JSON.parse(text);
 
-        // expected shape: {profile:{name,pinHash?}, state:{...}}
         if(!parsed || !parsed.profile || !parsed.state) throw new Error("bad");
         if(!parsed.profile.name) throw new Error("bad");
         if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
 
         const profiles = loadProfiles();
 
-        // create new profile (avoid overwrite by default)
         const importedName = (parsed.profile.name || "Импорт").trim();
         const id = uuid();
         const p = {
@@ -819,23 +810,19 @@
         hideOverlay();
         alert("Импорт успешно ✅");
       }catch(e){
-        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
+        alert("Неуспешен импорт. Увери се, че файлът е Export от CashControl.");
       }finally{
         overlayImportFile.value = "";
       }
     };
 
-    // Auto prompt overlay if no active profile
     function ensureProfileOnStart(){
       const id = getActiveProfileId();
       const profiles = loadProfiles();
       if(id && profiles.some(p=>p.id===id)){
-        // activate without asking pin (we don't store session pin; if profile has pin, require overlay)
         const p = profiles.find(x=>x.id===id);
         if(p.pinHash){
-          // show overlay so user enters PIN
           showOverlay();
-          // auto open login
           pendingLoginProfileId = id;
           loginHint.textContent = `Профил: ${p.name}`;
           loginBox.style.display = "block";
@@ -850,7 +837,7 @@
     }
 
     // =========================
-    // APP (same as ULTRA+, but state is per profile)
+    // APP (same UI/logic)
     // =========================
     const cats = {
       income:["Заплата","Ваучери","Друг доход"],
@@ -1333,7 +1320,7 @@
       monthPill.textContent=ymToLabel(active);
 
       // forms
-      setGoal.value = state.settings.goal ?? 10000;
+      setGoal.value = state.settings.goal ?? 0;
       setStart.value = state.settings.startSavings ?? 0;
 
       autoUtilities.value = state.auto.utilities ?? 0;
@@ -1473,11 +1460,9 @@
 
     btnSwitchProfile.onclick = showOverlay;
     btnLogout.onclick = ()=>{
-      // keep activeProfileId but show overlay (if no PIN, will auto-enter; so clear it)
       setActiveProfileId("");
       activeProfile=null;
       state=null;
-      // destroy charts
       try{ chartCats?.destroy(); chartCum?.destroy(); chartNet?.destroy(); chartCar?.destroy(); }catch(e){}
       showOverlay();
     };
@@ -1486,7 +1471,7 @@
     btnExportProfile.onclick = ()=>{
       if(!activeProfile || !state) return;
       const payload = {
-        version: "ULTRA++-profiles-v1",
+        version: "CashControl-profiles-v1",
         exportedAt: new Date().toISOString(),
         profile: { name: activeProfile.name, pinHash: activeProfile.pinHash || null },
         state
@@ -1495,7 +1480,7 @@
       const a=document.createElement("a");
       a.href=URL.createObjectURL(blob);
       const safeName = activeProfile.name.replace(/[^\p{L}\p{N}_-]+/gu, "_");
-      a.download=`budget-${safeName}-${new Date().toISOString().slice(0,10)}.json`;
+      a.download=`cashcontrol-${safeName}-${new Date().toISOString().slice(0,10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
     };
@@ -1511,7 +1496,6 @@
         if(!parsed.profile.name) throw new Error("bad");
         if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
 
-        // import into NEW profile by default (safer)
         const profiles = loadProfiles();
         const id = uuid();
         profiles.push({
@@ -1526,7 +1510,7 @@
         await activateProfile(id);
         alert("Импорт успешно ✅");
       }catch(e){
-        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
+        alert("Неуспешен импорт. Увери се, че файлът е Export от CashControl.");
       }finally{
         importProfileFile.value = "";
       }
