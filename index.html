@@ -1,1564 +1,472 @@
 <!doctype html>
 <html lang="bg">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0b1220" />
-  <title>Бюджет ULTRA++ (Профили)</title>
-  <style>
-    :root{
-      --bg:#0b1220; --card:#101a33; --muted:#93a4c7; --text:#e7efff;
-      --accent:#60a5fa; --good:#34d399; --bad:#fb7185; --warn:#fbbf24;
-      --border:#223056; --input:#0f1b37;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
-      background:linear-gradient(180deg,#0b1220,#070c16);
-      color:var(--text);
-      padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom) 14px;
-    }
-    header{display:flex;justify-content:space-between;align-items:center;padding:14px 0 10px;gap:10px}
-    h1{font-size:18px;margin:0;white-space:nowrap}
-    .pill{font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--border);border-radius:999px;white-space:nowrap}
-    .grid{display:grid;gap:12px}
-    .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .card{
-      background:rgba(16,26,51,.88); border:1px solid var(--border);
-      border-radius:16px; padding:12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-    }
-    .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    .value{font-size:18px;font-weight:900}
-    .value.good{color:var(--good)}
-    .value.bad{color:var(--bad)}
-    .value.warn{color:var(--warn)}
-    .row{display:flex;gap:10px;align-items:center}
-    .row > *{flex:1}
-    input, select, button, textarea{
-      width:100%; padding:11px 12px; border-radius:12px;
-      border:1px solid var(--border); background:var(--input); color:var(--text);
-      font-size:14px;
-    }
-    textarea{min-height:72px;resize:vertical}
-    button{
-      background:linear-gradient(180deg,#60a5fa,#3b82f6);
-      border:none; font-weight:900;
-    }
-    button.secondary{
-      background:transparent; border:1px solid var(--border); color:var(--text);
-      font-weight:800;
-    }
-    button.danger{
-      background:transparent; border:1px solid rgba(251,113,133,.55); color:var(--text);
-      font-weight:900;
-    }
-    .tabs{display:flex;gap:8px;margin:10px 0 12px;flex-wrap:wrap}
-    .tab{
-      flex:1; min-width:120px;
-      padding:10px 10px; border-radius:999px;
-      border:1px solid var(--border); background:transparent; color:var(--muted);
-      font-weight:900;
-    }
-    .tab.active{background:rgba(96,165,250,.15); color:var(--text); border-color:rgba(96,165,250,.4)}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .item{
-      display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
-      padding:10px;border:1px solid var(--border);border-radius:14px;background:rgba(12,22,49,.55)
-    }
-    .item .meta{min-width:0}
-    .item .meta .t{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .item .meta .s{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35}
-    .amt{font-weight:1000;white-space:nowrap}
-    .amt.in{color:var(--good)}
-    .amt.out{color:var(--bad)}
-    .hr{height:1px;background:var(--border);margin:10px 0}
-    .small{font-size:12px;color:var(--muted);line-height:1.35}
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-    .right{text-align:right}
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
-      background:rgba(12,22,49,.55); color:var(--muted); font-size:12px;
-    }
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .banner{
-      border:1px solid rgba(251,191,36,.45);
-      background:rgba(251,191,36,.08);
-      padding:10px 12px;border-radius:14px;color:var(--text);
-    }
-    .banner.bad{
-      border-color:rgba(251,113,133,.55);
-      background:rgba(251,113,133,.08);
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>CashControl</title>
 
-    /* ✅ FIX: Chart.js infinite growth */
-    .chartBox{ height:240px; position:relative; }
-    .chartBox canvas{ width:100% !important; height:100% !important; display:block; }
+<style>
+  :root{
+    --bg:#0b1220; --card:#101a33; --muted:#93a4c7; --text:#e7efff;
+    --accent:#3b82f6; --border:#223056; --input:#0f1b37;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    background:var(--bg);
+    color:var(--text);
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
+  }
+  h1{margin:0 0 8px 0;font-size:20px}
+  h2{margin:0 0 10px 0;font-size:18px}
+  .small{color:var(--muted);font-size:12px;line-height:1.35}
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .row{display:flex;gap:10px;align-items:center}
+  .row > *{flex:1}
+  button{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    background:var(--accent);
+    color:white;
+    font-weight:800;
+    margin-top:8px;
+  }
+  button.secondary{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  button.danger{
+    background:transparent;
+    border:1px solid rgba(251,113,133,.6);
+    color:var(--text);
+  }
+  input,select{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--input);
+    color:var(--text);
+    margin-top:8px;
+    font-size:14px;
+  }
+  .tabs{display:flex;gap:8px;margin:12px 0}
+  .tab{
+    flex:1;padding:10px;border-radius:999px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-weight:800
+  }
+  .tab.active{background:rgba(59,130,246,.25);color:var(--text);border-color:rgba(59,130,246,.6)}
+  .item{
+    display:flex;justify-content:space-between;gap:10px;align-items:center;
+    padding:10px;border:1px solid var(--border);border-radius:14px;background:rgba(12,22,49,.55);
+    margin-top:10px;
+  }
+  .item b{white-space:nowrap}
+  .chartBox{height:260px;position:relative}
+  .chartBox canvas{width:100%!important;height:100%!important;display:block}
 
-    /* Login overlay */
-    .overlay{
-      position:fixed; inset:0;
-      background:linear-gradient(180deg,rgba(11,18,32,.96),rgba(7,12,22,.96));
-      padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom) 14px;
-      display:none;
-      overflow:auto;
-      z-index:9999;
-    }
-    .overlay header{padding-top:18px}
-    .mutedLink{color:var(--muted); text-decoration:underline; cursor:pointer}
-  </style>
+  .overlay{
+    position:fixed; inset:0;
+    background:linear-gradient(180deg,rgba(11,18,32,.98),rgba(7,12,22,.98));
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
+    overflow:auto;
+    display:none;
+    z-index:9999;
+  }
+</style>
 </head>
 <body>
-  <!-- LOGIN / PROFILE OVERLAY -->
-  <div class="overlay" id="profileOverlay">
-    <header>
-      <h1>👤 Профили</h1>
-      <div class="pill" id="overlayPill">ULTRA++</div>
-    </header>
 
-    <div class="grid">
-      <div class="card">
-        <div class="label">Избери профил</div>
-        <div class="list" id="profileList"></div>
-        <div class="hr"></div>
-        <button class="secondary" id="btnShowCreate">+ Нов профил</button>
-        <div class="small" style="margin-top:10px">
-          Профилите са <b>локални</b> (само на този телефон). За прехвърляне ползвай Export/Import.
-        </div>
-      </div>
+<!-- PROFILE OVERLAY -->
+<div class="overlay" id="overlay">
+  <h2>👤 CashControl профили</h2>
+  <div class="small">Профилите са локални – всеки телефон пази своите данни. Export/Import е за смяна на телефон.</div>
 
-      <div class="card" id="createBox" style="display:none">
-        <div class="label">Създай профил</div>
-        <input id="newName" placeholder="Име (напр. Иван)" />
-        <input id="newPin" type="password" inputmode="numeric" placeholder="PIN (по желание)" style="margin-top:10px" />
-        <div class="two" style="margin-top:10px">
-          <button id="btnCreate">Създай</button>
-          <button class="secondary" id="btnCancelCreate">Отказ</button>
-        </div>
-        <div class="small" style="margin-top:10px">
-          Ако оставиш PIN празен → профилът ще влиза без PIN.
-        </div>
-      </div>
-
-      <div class="card" id="loginBox" style="display:none">
-        <div class="label">Вход</div>
-        <div class="small" id="loginHint">—</div>
-        <input id="loginPin" type="password" inputmode="numeric" placeholder="PIN" style="margin-top:10px" />
-        <div class="two" style="margin-top:10px">
-          <button id="btnLogin">Влез</button>
-          <button class="secondary" id="btnCancelLogin">Назад</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="label">Импорт (на профил) – ако си сменяш телефона</div>
-        <div class="small">Избери JSON файл, който си експортирал от стария телефон.</div>
-        <div class="hr"></div>
-        <button class="secondary" id="btnOverlayImport">Импорт JSON</button>
-        <input id="overlayImportFile" type="file" accept="application/json" style="display:none" />
-      </div>
-    </div>
+  <div class="card" style="margin-top:12px">
+    <div id="profileList"></div>
+    <button class="secondary" onclick="showCreate()">+ Нов профил</button>
   </div>
 
-  <!-- MAIN APP -->
-  <header>
-    <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-      <h1>📱 Бюджет ULTRA++</h1>
-      <div class="small" id="profileNameLine">Профил: —</div>
+  <div class="card" id="createCard" style="display:none">
+    <div class="small">Създай профил</div>
+    <input id="newName" placeholder="Име (напр. Иван)">
+    <input id="newPin" type="password" inputmode="numeric" placeholder="PIN (по желание)">
+    <div class="row">
+      <button onclick="createProfile()">Създай</button>
+      <button class="secondary" onclick="hideCreate()">Отказ</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <div class="pill" id="monthPill">—</div>
-      <button class="secondary" id="btnProfiles" style="width:auto;padding:8px 10px;border-radius:999px">👤</button>
-    </div>
-  </header>
-
-  <div class="tabs">
-    <button class="tab active" id="tabDash">Табло</button>
-    <button class="tab" id="tabAdd">Добави</button>
-    <button class="tab" id="tabAuto">Автоматично</button>
-    <button class="tab" id="tabCredits">Кредити</button>
-    <button class="tab" id="tabCar">Кола</button>
-    <button class="tab" id="tabPlan">План</button>
-    <button class="tab" id="tabReports">Отчети</button>
-    <button class="tab" id="tabSettings">Настройки</button>
+    <div class="small" style="margin-top:10px">Ако оставиш PIN празен → вход без PIN.</div>
   </div>
 
-  <!-- DASH -->
-  <section id="viewDash" class="grid">
-    <div class="card">
-      <div class="label">Месец</div>
-      <select id="selMonth"></select>
-      <div class="small" style="margin-top:6px">
-        Сумите включват: <b>транзакции</b> + <b>автоматични разходи</b> + <b>кредити</b>.
-      </div>
-    </div>
+  <div class="card">
+    <div class="small">Импорт профил (от стар телефон)</div>
+    <button class="secondary" onclick="importProfile()">Импорт JSON</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none">
+  </div>
+</div>
 
-    <div id="alertBox" class="banner" style="display:none"></div>
+<h1 id="title">CashControl</h1>
+<div class="small" id="subtitle">Профил: —</div>
 
-    <div class="grid cards">
-      <div class="card">
-        <div class="label">Доходи</div>
-        <div class="value" id="kIncome">€0</div>
-        <div class="small" id="kIncomeNote">—</div>
-      </div>
-      <div class="card">
-        <div class="label">Разходи</div>
-        <div class="value" id="kExpense">€0</div>
-        <div class="small" id="kExpenseNote">—</div>
-      </div>
-      <div class="card">
-        <div class="label">Спестявания</div>
-        <div class="value" id="kSavings">€0</div>
-        <div class="small">Транзакции тип „Спестяване“</div>
-      </div>
-      <div class="card">
-        <div class="label">Нетно</div>
-        <div class="value" id="kNet">€0</div>
-        <div class="small" id="kNetNote">—</div>
-      </div>
-    </div>
+<div class="tabs">
+  <button class="tab active" id="tabDash" onclick="setTab('dash')">Табло</button>
+  <button class="tab" id="tabAdd" onclick="setTab('add')">Добави</button>
+  <button class="tab" id="tabSettings" onclick="setTab('settings')">Настройки</button>
+</div>
 
-    <div class="card">
-      <div class="row" style="align-items:flex-end">
-        <div>
-          <div class="label">Цел спестявания</div>
-          <div class="value" id="kGoal">€0</div>
-        </div>
-        <div class="right">
-          <div class="label">Натрупано</div>
-          <div class="value" id="kGoalNow">€0</div>
-        </div>
-      </div>
-      <div class="hr"></div>
-      <div class="small" id="goalProgressTxt">—</div>
-      <div style="height:10px;background:#0b1430;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-top:8px">
-        <div id="goalBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--good),var(--accent))"></div>
-      </div>
-      <div class="hr"></div>
-      <div class="chips" id="autoChips"></div>
-    </div>
+<div id="dash" class="card">
+  <div class="small">Баланс</div>
+  <div style="font-size:22px;font-weight:900;margin-top:6px" id="balance">€0.00</div>
+  <div class="chartBox" style="margin-top:10px"><canvas id="chart"></canvas></div>
 
-    <div class="card">
-      <div class="label">Разходи по категории (този месец)</div>
-      <div class="chartBox"><canvas id="chartCats"></canvas></div>
-      <div class="small" style="margin-top:8px">Включва и авто разходи/кредити.</div>
-    </div>
+  <div class="small" style="margin-top:10px">Последни записи</div>
+  <div id="txList"></div>
+</div>
 
-    <div class="card">
-      <div class="label">Последни транзакции (този месец)</div>
-      <div class="list" id="txList"></div>
-    </div>
+<div id="add" class="card" style="display:none">
+  <div class="small">Добави запис</div>
+  <select id="type">
+    <option value="income">Доход</option>
+    <option value="expense">Разход</option>
+  </select>
+  <input id="amount" type="number" inputmode="decimal" placeholder="Сума €">
+  <input id="note" placeholder="Бележка (по желание)">
+  <button onclick="addTx()">Добави</button>
+</div>
 
-    <div class="card">
-      <div class="label">Автоматично приспадане (този месец)</div>
-      <div class="list" id="autoListDash"></div>
-      <div class="small" id="autoHintDash" style="margin-top:8px"></div>
-    </div>
-  </section>
+<div id="settings" class="card" style="display:none">
+  <div class="small">Профил</div>
+  <button class="secondary" onclick="switchProfile()">Смени профил</button>
+  <button class="secondary" onclick="exportProfile()">Export (профил)</button>
+  <button class="secondary" onclick="importProfile()">Import (профил)</button>
+  <button class="danger" onclick="logout()">Изход</button>
 
-  <!-- ADD -->
-  <section id="viewAdd" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Добави транзакция (месецът се взима от датата)</div>
+  <div class="small" style="margin-top:12px">⚠️ Изтриване</div>
+  <button class="danger" onclick="resetProfileData()">Изтрий данните на профила</button>
+</div>
 
-      <div class="two">
-        <input id="txDate" type="date" />
-        <select id="txType">
-          <option value="income">Доход</option>
-          <option value="expense">Разход</option>
-          <option value="saving">Спестяване</option>
-        </select>
-      </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // =====================
+  // CashControl: Profiles
+  // =====================
+  const PROFILES_KEY = "cashcontrol_profiles_v1";
+  const ACTIVE_KEY   = "cashcontrol_active_v1";
 
-      <div class="two" style="margin-top:10px">
-        <select id="txCat"></select>
-        <input id="txAmt" type="number" inputmode="decimal" placeholder="Сума (EUR)" />
-      </div>
+  let profile = null;
+  let state = null;
+  let chart = null;
 
-      <textarea id="txNote" placeholder="Бележка (по желание)" style="margin-top:10px"></textarea>
+  function loadProfiles(){
+    try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); }
+    catch(e){ return []; }
+  }
+  function saveProfiles(list){
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+  }
 
-      <div class="two" style="margin-top:10px">
-        <button id="btnAddTx">Добави</button>
-        <button class="secondary" id="btnClearTx">Изчисти</button>
-      </div>
-    </div>
+  // ✅ EMPTY DEFAULTS
+  function defaultState(){
+    return { tx: [] };
+  }
 
-    <div class="card">
-      <div class="label">Бързи бутони</div>
-      <div class="three">
-        <button class="secondary" id="quickSalary">+ Заплата</button>
-        <button class="secondary" id="quickVouchers">+ Ваучери</button>
-        <button class="secondary" id="quickFuel">− Гориво</button>
-      </div>
-      <div class="small" style="margin-top:8px">Избира категорията. Ти въвеждаш дата и сума.</div>
-    </div>
+  function stateKey(id){ return "cashcontrol_state__" + id; }
+  function saveState(){
+    if(!profile) return;
+    localStorage.setItem(stateKey(profile.id), JSON.stringify(state));
+  }
+  function loadState(id){
+    const raw = localStorage.getItem(stateKey(id));
+    return raw ? JSON.parse(raw) : defaultState();
+  }
 
-    <div class="card">
-      <div class="label">Транзакции (този месец) – изтриване</div>
-      <div class="list" id="txListManage"></div>
-    </div>
-  </section>
+  function showOverlay(){
+    document.getElementById("overlay").style.display="block";
+    renderProfileList();
+  }
+  function hideOverlay(){
+    document.getElementById("overlay").style.display="none";
+    hideCreate();
+  }
 
-  <!-- AUTO -->
-  <section id="viewAuto" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Автоматични разходи (фикс)</div>
-      <div class="small">Попълнено по твоя бюджет. (можеш да променяш)</div>
-      <div class="hr"></div>
+  function showCreate(){ document.getElementById("createCard").style.display="block"; }
+  function hideCreate(){
+    document.getElementById("createCard").style.display="none";
+    document.getElementById("newName").value="";
+    document.getElementById("newPin").value="";
+  }
 
-      <div class="two">
-        <div>
-          <div class="label">Комунални</div>
-          <input id="autoUtilities" type="number" inputmode="decimal" />
-        </div>
-        <div>
-          <div class="label">Телефон</div>
-          <input id="autoPhone" type="number" inputmode="decimal" />
-        </div>
-      </div>
+  function renderProfileList(){
+    const box = document.getElementById("profileList");
+    box.innerHTML = "";
 
-      <div class="two" style="margin-top:10px">
-        <div>
-          <div class="label">Revolut Premium</div>
-          <input id="autoRevolut" type="number" inputmode="decimal" />
-        </div>
-        <div>
-          <div class="label">Гражданска – сума (на 3 месеца)</div>
-          <input id="autoInsuranceAmount" type="number" inputmode="decimal" />
-        </div>
-      </div>
-
-      <div class="two" style="margin-top:10px">
-        <div>
-          <div class="label">Гражданска – котва месец</div>
-          <input id="autoInsuranceAnchor" type="month" />
-        </div>
-        <div>
-          <div class="label">Лимит разходи (за предупреждения)</div>
-          <input id="limitSpending" type="number" inputmode="decimal" />
-        </div>
-      </div>
-
-      <div class="two" style="margin-top:10px">
-        <div>
-          <div class="label">План Гориво</div>
-          <input id="autoFuelPlan" type="number" inputmode="decimal" />
-        </div>
-        <div>
-          <div class="label">План Храна (кеш)</div>
-          <input id="autoFoodPlan" type="number" inputmode="decimal" />
-        </div>
-      </div>
-
-      <div class="two" style="margin-top:10px">
-        <div>
-          <div class="label">Включи плановете като авто разход</div>
-          <select id="autoIncludePlans">
-            <option value="no">Не</option>
-            <option value="yes">Да</option>
-          </select>
-        </div>
-        <div>
-          <div class="label">Желано месечно спестяване (за прогноза)</div>
-          <input id="autoSaveTarget" type="number" inputmode="decimal" />
-        </div>
-      </div>
-
-      <button style="margin-top:12px" id="btnSaveAuto">Запази</button>
-    </div>
-  </section>
-
-  <!-- CREDITS -->
-  <section id="viewCredits" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Кредити – автоматично приспадане</div>
-      <div class="small">Кредит 1 е настроен да спира през Юни 2026 (можеш да го редактираш).</div>
-      <div class="hr"></div>
-
-      <input id="crName" placeholder="Име (напр. Кредит 1)" />
-      <div class="two" style="margin-top:10px">
-        <input id="crPay" type="number" inputmode="decimal" placeholder="Месечна вноска (€)" />
-        <select id="crMode">
-          <option value="expense">Разход</option>
-          <option value="saving">Спестяване</option>
-        </select>
-      </div>
-
-      <div class="two" style="margin-top:10px">
-        <input id="crStart" type="month" />
-        <input id="crEnd" type="month" />
-      </div>
-
-      <textarea id="crNote" placeholder="Бележка (по желание)" style="margin-top:10px"></textarea>
-
-      <div class="two" style="margin-top:10px">
-        <button id="btnSaveCredit">Запази кредит</button>
-        <button class="secondary" id="btnNewCredit">Нов</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label">Списък кредити</div>
-      <div class="list" id="creditList"></div>
-    </div>
-  </section>
-
-  <!-- CAR -->
-  <section id="viewCar" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Кола – бюджет и лимити</div>
-      <div class="hr"></div>
-      <div class="two">
-        <div>
-          <div class="label">Лимит кола (общо)</div>
-          <input id="carLimit" type="number" inputmode="decimal" />
-        </div>
-        <div>
-          <div class="label">Лимит гориво</div>
-          <input id="carFuelLimit" type="number" inputmode="decimal" />
-        </div>
-      </div>
-      <button style="margin-top:12px" id="btnSaveCar">Запази</button>
-    </div>
-
-    <div class="card">
-      <div class="label">Графика: разходи за кола (12 месеца)</div>
-      <div class="chartBox"><canvas id="chartCar"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="label">Този месец – кола</div>
-      <div class="list" id="carThisMonth"></div>
-      <div class="small" id="carHint" style="margin-top:8px"></div>
-    </div>
-  </section>
-
-  <!-- PLAN -->
-  <section id="viewPlan" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">План доход + Прогноза (12 месеца)</div>
-      <div class="small">Планът е по профил (всеки си го настройва отделно).</div>
-      <div class="hr"></div>
-      <div class="two">
-        <div>
-          <div class="label">План заплата (€)</div>
-          <input id="planSalary" type="number" inputmode="decimal" />
-        </div>
-        <div>
-          <div class="label">План ваучери (€)</div>
-          <input id="planVouchers" type="number" inputmode="decimal" />
-        </div>
-      </div>
-      <button style="margin-top:12px" id="btnSavePlan">Запази план</button>
-    </div>
-
-    <div class="card">
-      <div class="label">Таблица прогноза</div>
-      <div class="list" id="forecastList"></div>
-    </div>
-  </section>
-
-  <!-- REPORTS -->
-  <section id="viewReports" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Натрупани спестявания (24 месеца)</div>
-      <div class="chartBox"><canvas id="chartCum"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="label">Нетно по месеци (12 месеца)</div>
-      <div class="chartBox"><canvas id="chartNet"></canvas></div>
-    </div>
-  </section>
-
-  <!-- SETTINGS -->
-  <section id="viewSettings" class="grid" style="display:none">
-    <div class="card">
-      <div class="label">Цел и начални спестявания</div>
-      <div class="two">
-        <input id="setGoal" type="number" inputmode="decimal" placeholder="Цел (€)" />
-        <input id="setStart" type="number" inputmode="decimal" placeholder="Начални спестявания (€)" />
-      </div>
-      <button style="margin-top:10px" id="btnSaveSettings">Запази</button>
-    </div>
-
-    <div class="card">
-      <div class="label">Профил</div>
-      <div class="small">Това е локален профил само за този телефон.</div>
-      <div class="hr"></div>
-      <div class="two">
-        <button class="secondary" id="btnSwitchProfile">Смени профил</button>
-        <button class="secondary" id="btnLogout">Изход</button>
-      </div>
-      <div class="hr"></div>
-      <div class="two">
-        <button class="secondary" id="btnExportProfile">Export (профил)</button>
-        <button class="secondary" id="btnImportProfile">Import (профил)</button>
-      </div>
-      <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
-      <div class="small" style="margin-top:10px">
-        Export/Import е най-добрият вариант при смяна на телефон (iCloud Drive / Files).
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label">Изтриване</div>
-      <div class="small">Изтрива само данните на текущия профил.</div>
-      <div class="hr"></div>
-      <button class="danger" id="btnReset">Изтрий данните на профила</button>
-      <div class="small" style="margin-top:10px">
-        Ако искаш да изтриеш и самия профил → от „Профили“ (👤) и „Изтрий“.
-      </div>
-    </div>
-  </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script>
-    // =========================
-    // PROFILE SYSTEM (LOCAL)
-    // =========================
-    const PROFILES_KEY = "budget_ultra_profiles_v1";
-    const ACTIVE_PROFILE_KEY = "budget_ultra_active_profile_v1";
-
-    const monthNamesBG = ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"];
-    const fmt = new Intl.NumberFormat('bg-BG', { style:'currency', currency:'EUR' });
-
-    const byId = (id)=>document.getElementById(id);
-    const pad2 = (n)=>String(n).padStart(2,"0");
-    const ymNow = ()=>{ const d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1); };
-    const ymFromDate = (dateStr)=> dateStr ? dateStr.slice(0,7) : "";
-    const ymToLabel = (ymStr)=>{ const [y,m]=ymStr.split("-").map(Number); return monthNamesBG[m-1]+" "+y; };
-    const addMonths = (ymStr, delta)=>{
-      const [y,m]=ymStr.split("-").map(Number);
-      const d=new Date(y, m-1, 1);
-      d.setMonth(d.getMonth()+delta);
-      return d.getFullYear()+"-"+pad2(d.getMonth()+1);
-    };
-
-    function uuid(){
-      if (window.crypto?.randomUUID) return crypto.randomUUID();
-      return "id_"+Math.random().toString(16).slice(2)+Date.now().toString(16);
+    const profiles = loadProfiles();
+    if(!profiles.length){
+      box.innerHTML = `<div class="small">Няма профили. Създай първия от „Нов профил“.</div>`;
+      return;
     }
 
-    async function sha256(text){
-      const enc = new TextEncoder().encode(text);
-      const buf = await crypto.subtle.digest("SHA-256", enc);
-      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    profiles.forEach(p=>{
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:900">${p.name}</div>
+          <div class="small">${p.pin ? "🔒 PIN" : "Без PIN"}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+          <button class="secondary" style="margin-top:0" data-act="open">Вход</button>
+          <button class="danger" style="margin-top:0" data-act="del">Изтрий</button>
+        </div>
+      `;
+      div.querySelector('[data-act="open"]').onclick = ()=> login(p);
+      div.querySelector('[data-act="del"]').onclick  = ()=> deleteProfile(p);
+      box.appendChild(div);
+    });
+  }
+
+  function createProfile(){
+    const name = document.getElementById("newName").value.trim();
+    const pin  = document.getElementById("newPin").value.trim();
+    if(!name) return alert("Въведи име.");
+
+    const profiles = loadProfiles();
+    const p = { id: Date.now().toString(), name, pin: pin || "" };
+    profiles.push(p);
+    saveProfiles(profiles);
+
+    localStorage.setItem(ACTIVE_KEY, p.id);
+    profile = p;
+    state = defaultState();
+    saveState();
+
+    hideOverlay();
+    render();
+  }
+
+  function login(p){
+    if(p.pin){
+      const entered = prompt("PIN за " + p.name + ":");
+      if(entered !== p.pin) return alert("Грешен PIN.");
     }
+    profile = p;
+    state = loadState(p.id);
+    localStorage.setItem(ACTIVE_KEY, p.id);
+    hideOverlay();
+    render();
+  }
 
-    function loadProfiles(){
-      try{
-        const raw = localStorage.getItem(PROFILES_KEY);
-        return raw ? JSON.parse(raw) : [];
-      }catch(e){ return []; }
-    }
-    function saveProfiles(list){
-      localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
-    }
-    function getActiveProfileId(){
-      return localStorage.getItem(ACTIVE_PROFILE_KEY) || "";
-    }
-    function setActiveProfileId(id){
-      localStorage.setItem(ACTIVE_PROFILE_KEY, id);
-    }
-    function profileStoreKey(id){ return "budget_ultra_profile_state_v1__" + id; }
+  function deleteProfile(p){
+    if(!confirm(`Да изтрия профил "${p.name}"? Това изтрива и данните.`)) return;
 
-    function loadStateForProfile(profileId){
-      const key = profileStoreKey(profileId);
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : null;
-      }catch(e){ return null; }
-    }
-    function saveStateForProfile(profileId, stateObj){
-      const key = profileStoreKey(profileId);
-      localStorage.setItem(key, JSON.stringify(stateObj));
-    }
+    const profiles = loadProfiles().filter(x=>x.id !== p.id);
+    saveProfiles(profiles);
+    localStorage.removeItem(stateKey(p.id));
 
-    function defaultState(){
-      const nowYM = ymNow();
-      return {
-        settings:{ activeYM: nowYM, goal: 10000, startSavings: 0 },
-        plan:{ salary: 1350, vouchers: 100 },
-        auto:{
-          utilities: 60, phone: 55, revolut: 14,
-          fuelPlan: 70, foodPlan: 60, includePlansAsAuto: "no",
-          insuranceAmount: 35, insuranceAnchorYM: nowYM,
-          spendingLimit: 0, autoSaveTarget: 0
-        },
-        car:{ limit: 200, fuelLimit: 100 },
-        credits:[
-          { id: uuid(), name:"Кредит 1 (до юни)", pay:125, startYM: nowYM, endYM:"2026-06", mode:"expense", note:"Автоматично до Юни 2026." },
-          { id: uuid(), name:"Кредит 2", pay:150, startYM: nowYM, endYM:null, mode:"expense", note:"Дългосрочен." }
-        ],
-        tx:[]
-      };
-    }
-
-    let activeProfile = null; // {id,name,pinHash?}
-    let state = null;
-
-    const profileOverlay = byId("profileOverlay");
-    const profileList = byId("profileList");
-    const btnProfiles = byId("btnProfiles");
-    const profileNameLine = byId("profileNameLine");
-
-    const btnShowCreate = byId("btnShowCreate");
-    const createBox = byId("createBox");
-    const newName = byId("newName");
-    const newPin = byId("newPin");
-    const btnCreate = byId("btnCreate");
-    const btnCancelCreate = byId("btnCancelCreate");
-
-    const loginBox = byId("loginBox");
-    const loginHint = byId("loginHint");
-    const loginPin = byId("loginPin");
-    const btnLogin = byId("btnLogin");
-    const btnCancelLogin = byId("btnCancelLogin");
-    let pendingLoginProfileId = null;
-
-    const btnOverlayImport = byId("btnOverlayImport");
-    const overlayImportFile = byId("overlayImportFile");
-
-    function showOverlay(){
-      profileOverlay.style.display = "block";
-      createBox.style.display = "none";
-      loginBox.style.display = "none";
-      newName.value = "";
-      newPin.value = "";
-      loginPin.value = "";
-      pendingLoginProfileId = null;
+    if(profile && profile.id === p.id){
+      profile = null;
+      state = null;
+      localStorage.removeItem(ACTIVE_KEY);
+      showOverlay();
+    } else {
       renderProfileList();
     }
-    function hideOverlay(){
-      profileOverlay.style.display = "none";
+  }
+
+  function switchProfile(){ showOverlay(); }
+
+  function logout(){
+    profile = null;
+    state = null;
+    localStorage.removeItem(ACTIVE_KEY);
+    if(chart){ chart.destroy(); chart = null; }
+    document.getElementById("title").textContent = "CashControl";
+    document.getElementById("subtitle").textContent = "Профил: —";
+    document.getElementById("balance").textContent = "€0.00";
+    document.getElementById("txList").innerHTML = "";
+    showOverlay();
+  }
+
+  function resetProfileData(){
+    if(!profile) return;
+    if(!confirm("Да изтрия всички записи на този профил?")) return;
+    state = defaultState();
+    saveState();
+    render();
+  }
+
+  // =====================
+  // CashControl: App
+  // =====================
+  function addTx(){
+    if(!profile) return showOverlay();
+    const type = document.getElementById("type").value;
+    const amt  = Number(document.getElementById("amount").value);
+    const note = (document.getElementById("note").value || "").trim();
+    if(!Number.isFinite(amt) || amt <= 0) return alert("Въведи сума > 0.");
+
+    state.tx.push({ type, amt, note, ts: Date.now() });
+    document.getElementById("amount").value = "";
+    document.getElementById("note").value = "";
+    saveState();
+    render();
+    setTab("dash");
+  }
+
+  function calcBalance(){
+    let b = 0;
+    for(const t of state.tx){
+      if(t.type === "income") b += t.amt;
+      else b -= t.amt;
     }
+    return b;
+  }
 
-    btnProfiles.onclick = showOverlay;
-
-    btnShowCreate.onclick = ()=>{
-      createBox.style.display = "block";
-      loginBox.style.display = "none";
-      newName.focus();
-    };
-    btnCancelCreate.onclick = ()=>{
-      createBox.style.display = "none";
-    };
-
-    btnCancelLogin.onclick = ()=>{
-      loginBox.style.display = "none";
-      pendingLoginProfileId = null;
-      loginPin.value = "";
-    };
-
-    function renderProfileList(){
-      const profiles = loadProfiles();
-      profileList.innerHTML = "";
-      if(!profiles.length){
-        profileList.innerHTML = `<div class="small">Няма профили. Създай първия от „Нов профил“.</div>`;
-        return;
-      }
-
-      for(const p of profiles){
-        const needsPin = !!p.pinHash;
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="meta">
-            <div class="t">${p.name}</div>
-            <div class="s">${needsPin ? "🔒 PIN" : "Без PIN"} • ${p.lastUsed ? ("Последно: "+p.lastUsed) : ""}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
-            <button class="secondary" data-act="open" data-id="${p.id}">Вход</button>
-            <button class="danger" data-act="del" data-id="${p.id}">Изтрий</button>
-          </div>
-        `;
-        profileList.appendChild(div);
-      }
-
-      profileList.querySelectorAll("button").forEach(btn=>{
-        btn.onclick = async ()=>{
-          const id = btn.getAttribute("data-id");
-          const act = btn.getAttribute("data-act");
-          const profiles = loadProfiles();
-          const p = profiles.find(x=>x.id===id);
-          if(!p) return;
-
-          if(act==="del"){
-            if(confirm(`Да изтрия профил "${p.name}"? Това изтрива и всичките му данни.`)){
-              const filtered = profiles.filter(x=>x.id!==id);
-              saveProfiles(filtered);
-              // delete state
-              localStorage.removeItem(profileStoreKey(id));
-              // if active
-              if(getActiveProfileId()===id){
-                setActiveProfileId("");
-                activeProfile=null;
-                state=null;
-              }
-              renderProfileList();
-            }
-            return;
-          }
-
-          if(act==="open"){
-            if(p.pinHash){
-              pendingLoginProfileId = id;
-              loginHint.textContent = `Профил: ${p.name}`;
-              loginBox.style.display = "block";
-              createBox.style.display = "none";
-              loginPin.value = "";
-              loginPin.focus();
-            } else {
-              await activateProfile(id);
-              hideOverlay();
-            }
-          }
-        };
-      });
+  function renderTx(){
+    const box = document.getElementById("txList");
+    box.innerHTML = "";
+    const last = state.tx.slice().sort((a,b)=>b.ts-a.ts).slice(0,8);
+    if(!last.length){
+      box.innerHTML = `<div class="small" style="margin-top:8px">Няма записи. Отиди на „Добави“.</div>`;
+      return;
     }
+    last.forEach(t=>{
+      const sign = t.type==="income" ? "+" : "−";
+      const div = document.createElement("div");
+      div.className="item";
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:900">${t.note ? t.note : (t.type==="income" ? "Доход" : "Разход")}</div>
+          <div class="small">${new Date(t.ts).toLocaleString("bg-BG")}</div>
+        </div>
+        <b>${sign} €${t.amt.toFixed(2)}</b>
+      `;
+      box.appendChild(div);
+    });
+  }
 
-    btnCreate.onclick = async ()=>{
-      const name = (newName.value || "").trim();
-      const pin = (newPin.value || "").trim();
-      if(!name){ alert("Въведи име."); return; }
+  function renderChart(){
+    const inc = state.tx.filter(t=>t.type==="income").reduce((s,t)=>s+t.amt,0);
+    const exp = state.tx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amt,0);
 
-      const profiles = loadProfiles();
-      if(profiles.some(p=>p.name.toLowerCase()===name.toLowerCase())){
-        if(!confirm("Има профил със същото име. Да продължа?")) return;
-      }
+    if(chart) chart.destroy();
+    chart = new Chart(document.getElementById("chart"),{
+      type:"doughnut",
+      data:{
+        labels:["Доходи","Разходи"],
+        datasets:[{ data:[inc, exp] }]
+      },
+      options:{ responsive:true, maintainAspectRatio:false, animation:false }
+    });
+  }
 
-      const id = uuid();
-      const pinHash = pin ? await sha256(pin) : "";
-      const p = { id, name, pinHash: pinHash || null, createdAt: new Date().toISOString().slice(0,10), lastUsed: "" };
-      profiles.push(p);
-      saveProfiles(profiles);
+  function render(){
+    if(!profile || !state) return;
+    document.getElementById("title").textContent = "CashControl";
+    document.getElementById("subtitle").textContent = "Профил: " + profile.name;
 
-      // init state
-      saveStateForProfile(id, defaultState());
+    const b = calcBalance();
+    document.getElementById("balance").textContent = "€" + b.toFixed(2);
 
-      await activateProfile(id);
-      hideOverlay();
+    renderTx();
+    renderChart();
+  }
+
+  function setTab(tab){
+    const tabs = ["dash","add","settings"];
+    tabs.forEach(t=>{
+      document.getElementById(t).style.display = (t===tab) ? "block" : "none";
+      document.getElementById("tab"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active", t===tab);
+    });
+  }
+
+  // Export / Import
+  function exportProfile(){
+    if(!profile || !state) return;
+
+    const payload = {
+      app: "CashControl",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      profile: { name: profile.name, pin: profile.pin || "" },
+      state
     };
 
-    btnLogin.onclick = async ()=>{
-      const profiles = loadProfiles();
-      const id = pendingLoginProfileId;
-      const p = profiles.find(x=>x.id===id);
-      if(!p){ alert("Профилът липсва."); return; }
-      const pin = (loginPin.value || "").trim();
-      const h = await sha256(pin);
-      if(h !== p.pinHash){
-        alert("Грешен PIN.");
-        return;
-      }
-      await activateProfile(id);
-      hideOverlay();
-    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const safe = profile.name.replace(/[^a-zA-Z0-9а-яА-Я_-]+/g,"_");
+    a.download = `cashcontrol-${safe}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
-    async function activateProfile(id){
-      const profiles = loadProfiles();
-      const p = profiles.find(x=>x.id===id);
-      if(!p){ alert("Профилът липсва."); return; }
+  function importProfile(){
+    const input = document.getElementById("importFile");
+    input.value = "";
+    input.click();
+    input.onchange = async ()=>{
+      const file = input.files?.[0];
+      if(!file) return;
 
-      // load or init state
-      let s = loadStateForProfile(id);
-      if(!s){
-        s = defaultState();
-        saveStateForProfile(id, s);
-      }
-
-      // update last used
-      const today = new Date().toISOString().slice(0,10);
-      p.lastUsed = today;
-      saveProfiles(profiles);
-
-      activeProfile = p;
-      state = s;
-      setActiveProfileId(id);
-
-      profileNameLine.textContent = "Профил: " + p.name;
-      render();
-    }
-
-    // Import from overlay (creates profile if needed)
-    btnOverlayImport.onclick = ()=> overlayImportFile.click();
-    overlayImportFile.onchange = async ()=>{
-      const f = overlayImportFile.files?.[0];
-      if(!f) return;
       try{
-        const text = await f.text();
+        const text = await file.text();
         const parsed = JSON.parse(text);
 
-        // expected shape: {profile:{name,pinHash?}, state:{...}}
-        if(!parsed || !parsed.profile || !parsed.state) throw new Error("bad");
-        if(!parsed.profile.name) throw new Error("bad");
-        if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
+        if(!parsed || parsed.app!=="CashControl" || !parsed.profile || !parsed.state || !Array.isArray(parsed.state.tx)){
+          throw new Error("bad");
+        }
 
         const profiles = loadProfiles();
 
-        // create new profile (avoid overwrite by default)
-        const importedName = (parsed.profile.name || "Импорт").trim();
-        const id = uuid();
-        const p = {
-          id,
-          name: importedName,
-          pinHash: parsed.profile.pinHash || null,
-          createdAt: new Date().toISOString().slice(0,10),
-          lastUsed: ""
-        };
+        // new profile id (avoid overwrite)
+        const newId = Date.now().toString() + "_" + Math.random().toString(16).slice(2);
+        const p = { id:newId, name: parsed.profile.name || "Импорт", pin: parsed.profile.pin || "" };
+
         profiles.push(p);
         saveProfiles(profiles);
-        saveStateForProfile(id, parsed.state);
+        localStorage.setItem(stateKey(p.id), JSON.stringify(parsed.state));
 
-        await activateProfile(id);
-        hideOverlay();
         alert("Импорт успешно ✅");
+        renderProfileList();
       }catch(e){
-        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
-      }finally{
-        overlayImportFile.value = "";
+        alert("Неуспешен импорт. Увери се, че файлът е export от CashControl.");
       }
     };
+  }
 
-    // Auto prompt overlay if no active profile
-    function ensureProfileOnStart(){
-      const id = getActiveProfileId();
-      const profiles = loadProfiles();
-      if(id && profiles.some(p=>p.id===id)){
-        // activate without asking pin (we don't store session pin; if profile has pin, require overlay)
-        const p = profiles.find(x=>x.id===id);
-        if(p.pinHash){
-          // show overlay so user enters PIN
+  // Boot
+  window.onload = ()=>{
+    const activeId = localStorage.getItem(ACTIVE_KEY);
+    const profiles = loadProfiles();
+
+    if(activeId){
+      const p = profiles.find(x=>x.id===activeId);
+      if(p){
+        // Require PIN each time if PIN exists
+        if(p.pin){
           showOverlay();
-          // auto open login
-          pendingLoginProfileId = id;
-          loginHint.textContent = `Профил: ${p.name}`;
-          loginBox.style.display = "block";
-          createBox.style.display = "none";
-          setTimeout(()=>loginPin.focus(), 50);
         } else {
-          activateProfile(id);
+          profile = p;
+          state = loadState(p.id);
+          render();
+          return;
         }
-      } else {
-        showOverlay();
       }
     }
-
-    // =========================
-    // APP (same as ULTRA+, but state is per profile)
-    // =========================
-    const cats = {
-      income:["Заплата","Ваучери","Друг доход"],
-      expense:["Храна (кеш)","Гориво","Комунални","Телефон","Revolut","Гражданска","Покупки","Излизане","Кола: Ремонти","Кола: Такси","Кола: Винетка/Паркинг","Друго"],
-      saving:["Аварийни","Буфер","Дългосрочни"]
-    };
-
-    const tabs = {
-      dash: byId("tabDash"), add: byId("tabAdd"), auto: byId("tabAuto"), credits: byId("tabCredits"),
-      car: byId("tabCar"), plan: byId("tabPlan"), reports: byId("tabReports"), settings: byId("tabSettings")
-    };
-    const views = {
-      dash: byId("viewDash"), add: byId("viewAdd"), auto: byId("viewAuto"), credits: byId("viewCredits"),
-      car: byId("viewCar"), plan: byId("viewPlan"), reports: byId("viewReports"), settings: byId("viewSettings")
-    };
-
-    function setTab(activeKey){
-      for(const k of Object.keys(tabs)){
-        tabs[k].classList.toggle("active", k===activeKey);
-        views[k].style.display = (k===activeKey) ? "grid" : "none";
-      }
-      if(activeKey==="reports") setTimeout(rebuildReportsCharts, 80);
-      if(activeKey==="dash") setTimeout(rebuildDashCharts, 80);
-      if(activeKey==="car") setTimeout(rebuildCarChart, 80);
-    }
-    tabs.dash.onclick=()=>setTab("dash");
-    tabs.add.onclick=()=>setTab("add");
-    tabs.auto.onclick=()=>setTab("auto");
-    tabs.credits.onclick=()=>setTab("credits");
-    tabs.car.onclick=()=>setTab("car");
-    tabs.plan.onclick=()=>setTab("plan");
-    tabs.reports.onclick=()=>setTab("reports");
-    tabs.settings.onclick=()=>setTab("settings");
-
-    const monthPill = byId("monthPill");
-    const selMonth = byId("selMonth");
-    const alertBox = byId("alertBox");
-
-    const kIncome = byId("kIncome");
-    const kExpense = byId("kExpense");
-    const kSavings = byId("kSavings");
-    const kNet = byId("kNet");
-    const kIncomeNote = byId("kIncomeNote");
-    const kExpenseNote = byId("kExpenseNote");
-    const kNetNote = byId("kNetNote");
-
-    const kGoal = byId("kGoal");
-    const kGoalNow = byId("kGoalNow");
-    const goalBar = byId("goalBar");
-    const goalProgressTxt = byId("goalProgressTxt");
-    const autoChips = byId("autoChips");
-
-    const txList = byId("txList");
-    const txListManage = byId("txListManage");
-
-    const autoListDash = byId("autoListDash");
-    const autoHintDash = byId("autoHintDash");
-
-    const txDate = byId("txDate");
-    const txType = byId("txType");
-    const txCat = byId("txCat");
-    const txAmt = byId("txAmt");
-    const txNote = byId("txNote");
-    const btnAddTx = byId("btnAddTx");
-    const btnClearTx = byId("btnClearTx");
-    const quickSalary = byId("quickSalary");
-    const quickVouchers = byId("quickVouchers");
-    const quickFuel = byId("quickFuel");
-
-    const autoUtilities = byId("autoUtilities");
-    const autoPhone = byId("autoPhone");
-    const autoRevolut = byId("autoRevolut");
-    const autoInsuranceAmount = byId("autoInsuranceAmount");
-    const autoInsuranceAnchor = byId("autoInsuranceAnchor");
-    const limitSpending = byId("limitSpending");
-    const autoFuelPlan = byId("autoFuelPlan");
-    const autoFoodPlan = byId("autoFoodPlan");
-    const autoIncludePlans = byId("autoIncludePlans");
-    const autoSaveTarget = byId("autoSaveTarget");
-    const btnSaveAuto = byId("btnSaveAuto");
-
-    const crName = byId("crName");
-    const crPay = byId("crPay");
-    const crStart = byId("crStart");
-    const crEnd = byId("crEnd");
-    const crMode = byId("crMode");
-    const crNote = byId("crNote");
-    const btnSaveCredit = byId("btnSaveCredit");
-    const btnNewCredit = byId("btnNewCredit");
-    const creditList = byId("creditList");
-    let editingCreditId=null;
-
-    const carLimit = byId("carLimit");
-    const carFuelLimit = byId("carFuelLimit");
-    const btnSaveCar = byId("btnSaveCar");
-    const carThisMonth = byId("carThisMonth");
-    const carHint = byId("carHint");
-
-    const planSalary = byId("planSalary");
-    const planVouchers = byId("planVouchers");
-    const btnSavePlan = byId("btnSavePlan");
-    const forecastList = byId("forecastList");
-
-    const setGoal = byId("setGoal");
-    const setStart = byId("setStart");
-    const btnSaveSettings = byId("btnSaveSettings");
-
-    const btnSwitchProfile = byId("btnSwitchProfile");
-    const btnLogout = byId("btnLogout");
-    const btnExportProfile = byId("btnExportProfile");
-    const btnImportProfile = byId("btnImportProfile");
-    const importProfileFile = byId("importProfileFile");
-    const btnReset = byId("btnReset");
-
-    let chartCum=null, chartNet=null, chartCats=null, chartCar=null;
-
-    function persist(){
-      if(!activeProfile?.id) return;
-      saveStateForProfile(activeProfile.id, state);
-    }
-
-    function fillCategorySelect(){
-      txCat.innerHTML="";
-      cats[txType.value].forEach(c=>{
-        const o=document.createElement("option");
-        o.value=c; o.textContent=c;
-        txCat.appendChild(o);
-      });
-    }
-
-    function ensureMonthOptions(){
-      const opts=new Set();
-      const start=addMonths(ymNow(), -23);
-      for(let i=0;i<24;i++) opts.add(addMonths(start,i));
-      for(const t of state.tx) if(t.ym) opts.add(t.ym);
-      for(const c of state.credits){ if(c.startYM) opts.add(c.startYM); if(c.endYM) opts.add(c.endYM); }
-      if(state.auto.insuranceAnchorYM) opts.add(state.auto.insuranceAnchorYM);
-
-      const arr=Array.from(opts).sort((a,b)=>b.localeCompare(a));
-      selMonth.innerHTML="";
-      for(const v of arr){
-        const o=document.createElement("option");
-        o.value=v; o.textContent=ymToLabel(v);
-        selMonth.appendChild(o);
-      }
-      if(!state.settings.activeYM || !arr.includes(state.settings.activeYM)) state.settings.activeYM=arr[0]||ymNow();
-      selMonth.value=state.settings.activeYM;
-    }
-
-    function monthTx(ymStr){ return state.tx.filter(t=>t.ym===ymStr); }
-    function inRange(startYM,endYM,ymStr){
-      if(!startYM) return false;
-      if(ymStr<startYM) return false;
-      if(endYM && ymStr>endYM) return false;
-      return true;
-    }
-    function creditsForMonth(ymStr){ return state.credits.filter(c=>inRange(c.startYM,c.endYM,ymStr)); }
-
-    function insuranceDue(ymStr){
-      const anchor = state.auto.insuranceAnchorYM || ymNow();
-      const [ay,am]=anchor.split("-").map(Number);
-      const [y,m]=ymStr.split("-").map(Number);
-      const diff=(y-ay)*12+(m-am);
-      return diff>=0 && diff%3===0;
-    }
-
-    function autoExpensesForMonth(ymStr){
-      const a=state.auto;
-      const list=[];
-      if(Number(a.utilities)>0) list.push({name:"Комунални", amt:Number(a.utilities), cat:"Комунални"});
-      if(Number(a.phone)>0) list.push({name:"Телефон", amt:Number(a.phone), cat:"Телефон"});
-      if(Number(a.revolut)>0) list.push({name:"Revolut Premium", amt:Number(a.revolut), cat:"Revolut"});
-      if(Number(a.insuranceAmount)>0 && insuranceDue(ymStr)) list.push({name:"Гражданска (3м)", amt:Number(a.insuranceAmount), cat:"Гражданска"});
-      if(a.includePlansAsAuto==="yes"){
-        if(Number(a.fuelPlan)>0) list.push({name:"Гориво (план)", amt:Number(a.fuelPlan), cat:"Гориво"});
-        if(Number(a.foodPlan)>0) list.push({name:"Храна (план)", amt:Number(a.foodPlan), cat:"Храна (кеш)"});
-      }
-      return list;
-    }
-
-    function computeMonth(ymStr){
-      const tx=monthTx(ymStr);
-      let incomeTx=0, expenseTx=0, savingTx=0;
-      const expByCat = {};
-      const addExpCat = (cat, amt)=>{ expByCat[cat]=(expByCat[cat]||0)+amt; };
-
-      for(const t of tx){
-        const a=Number(t.amt)||0;
-        if(t.type==="income") incomeTx+=a;
-        else if(t.type==="expense"){ expenseTx+=a; addExpCat(t.cat, a); }
-        else if(t.type==="saving") savingTx+=a;
-      }
-
-      const cr=creditsForMonth(ymStr);
-      let creditExpense=0;
-      for(const c of cr){
-        const p=Number(c.pay)||0;
-        if(c.mode!=="saving"){ creditExpense+=p; addExpCat("Кредити", p); }
-      }
-
-      const auto=autoExpensesForMonth(ymStr);
-      const autoExpense=auto.reduce((s,x)=>s+(Number(x.amt)||0),0);
-      for(const a of auto) addExpCat(a.cat, Number(a.amt)||0);
-
-      const income=incomeTx;
-      const expense=expenseTx+creditExpense+autoExpense;
-      const savings=savingTx;
-      const net=income-expense-savings;
-
-      return {income,expense,savings,net,incomeTx,expenseTx,savingTx,creditExpense,autoExpense,autoList:auto,credits:cr,expByCat};
-    }
-
-    function totalSavings(){
-      let s=Number(state.settings.startSavings)||0;
-      for(const t of state.tx) if(t.type==="saving") s+=Number(t.amt)||0;
-      return s;
-    }
-
-    function computeCarMonth(ymStr){
-      const tx = monthTx(ymStr).filter(t=>t.type==="expense");
-      const isCarCat = (c)=>["Гориво","Кола: Ремонти","Кола: Такси","Кола: Винетка/Паркинг"].includes(c);
-      const items = tx.filter(t=>isCarCat(t.cat));
-      const by = {};
-      for(const t of items) by[t.cat]=(by[t.cat]||0)+(Number(t.amt)||0);
-      const total = Object.values(by).reduce((a,b)=>a+b,0);
-      return {by,total};
-    }
-
-    function renderCarMonth(){
-      const ymStr = state.settings.activeYM;
-      const {by,total} = computeCarMonth(ymStr);
-      carThisMonth.innerHTML="";
-      if(!total){
-        carThisMonth.innerHTML = `<div class="small">Няма въведени разходи за кола този месец.</div>`;
-        carHint.textContent = "";
-        return;
-      }
-      for(const [cat,amt] of Object.entries(by)){
-        const div=document.createElement("div");
-        div.className="item";
-        div.innerHTML = `
-          <div class="meta"><div class="t">${cat}</div><div class="s">Този месец</div></div>
-          <div class="amt out">− ${fmt.format(amt)}</div>`;
-        carThisMonth.appendChild(div);
-      }
-      const limit = Number(state.car.limit)||0;
-      carHint.textContent = `Общо: ${fmt.format(total)} • Лимит: ${fmt.format(limit)} • Остава: ${fmt.format(Math.max(0,limit-total))}`;
-    }
-
-    function renderAutoChips(){
-      autoChips.innerHTML="";
-      const a=state.auto;
-      const chips=[
-        ["Комунални", fmt.format(Number(a.utilities)||0)],
-        ["Телефон", fmt.format(Number(a.phone)||0)],
-        ["Revolut", fmt.format(Number(a.revolut)||0)],
-        ["Гражданска/3м", fmt.format(Number(a.insuranceAmount)||0)+" • "+(a.insuranceAnchorYM?ymToLabel(a.insuranceAnchorYM):"—")]
-      ];
-      chips.forEach(([t,v])=>{
-        const s=document.createElement("span");
-        s.className="chip";
-        s.textContent=t+": "+v;
-        autoChips.appendChild(s);
-      });
-    }
-
-    function renderAlerts(info){
-      alertBox.style.display="none";
-      alertBox.classList.remove("bad");
-      const msgs=[];
-      if(info.net<0){ msgs.push("⚠️ Преразход (нетното е отрицателно)."); alertBox.classList.add("bad"); }
-      const lim=Number(state.auto.spendingLimit)||0;
-      if(lim>0 && info.expense>lim) msgs.push(`⚠️ Разходи ${fmt.format(info.expense)} над лимита ${fmt.format(lim)}.`);
-      const carSpend = computeCarMonth(state.settings.activeYM).total;
-      if(Number(state.car.limit)>0 && carSpend>Number(state.car.limit)) msgs.push(`⚠️ Кола ${fmt.format(carSpend)} над лимит ${fmt.format(Number(state.car.limit))}.`);
-      if(msgs.length){
-        alertBox.style.display="block";
-        alertBox.innerHTML = "<b>Предупреждения</b><br/>" + msgs.map(m=>"• "+m).join("<br/>");
-      }
-    }
-
-    function renderTxList(ymStr){
-      const arr=monthTx(ymStr).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-      txList.innerHTML="";
-      const last=arr.slice(0,12);
-      if(!last.length){ txList.innerHTML='<div class="small">Няма транзакции. Отиди на “Добави”.</div>'; return; }
-      for(const t of last){
-        const div=document.createElement("div");
-        div.className="item";
-        const prefix=t.type==="income"?"+":(t.type==="expense"?"−":"→");
-        const cls=t.type==="income"?"in":(t.type==="expense"?"out":"");
-        div.innerHTML = `
-          <div class="meta"><div class="t">${t.cat}</div><div class="s">${t.date||""}${t.note?(" • "+t.note):""}</div></div>
-          <div class="amt ${cls}">${prefix} ${fmt.format(Number(t.amt)||0)}</div>`;
-        txList.appendChild(div);
-      }
-    }
-
-    function renderTxManage(ymStr){
-      const arr=monthTx(ymStr).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-      txListManage.innerHTML="";
-      if(!arr.length){ txListManage.innerHTML='<div class="small">Няма транзакции за този месец.</div>'; return; }
-      for(const t of arr.slice(0,40)){
-        const div=document.createElement("div");
-        div.className="item";
-        const prefix=t.type==="income"?"+":(t.type==="expense"?"−":"→");
-        const cls=t.type==="income"?"in":(t.type==="expense"?"out":"");
-        div.innerHTML = `
-          <div class="meta"><div class="t">${t.cat}</div><div class="s">${t.date||""}${t.note?(" • "+t.note):""}</div></div>
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <div class="amt ${cls}">${prefix} ${fmt.format(Number(t.amt)||0)}</div>
-            <button class="danger" data-id="${t.id}" style="padding:8px 10px;border-radius:10px">Изтрий</button>
-          </div>`;
-        txListManage.appendChild(div);
-      }
-      txListManage.querySelectorAll("button[data-id]").forEach(btn=>{
-        btn.onclick=()=>{
-          const id=btn.getAttribute("data-id");
-          if(confirm("Изтриване на транзакцията?")){
-            state.tx = state.tx.filter(x=>x.id!==id);
-            persist(); render();
-          }
-        };
-      });
-    }
-
-    function renderAutoDash(info){
-      autoListDash.innerHTML="";
-      const items=[];
-      for(const c of info.credits) items.push({kind:"Кредит", name:c.name, amt:Number(c.pay)||0});
-      for(const a of info.autoList) items.push({kind:"Авто", name:a.name, amt:Number(a.amt)||0});
-      if(!items.length){ autoListDash.innerHTML='<div class="small">Няма автоматични приспадания.</div>'; autoHintDash.textContent=""; return; }
-      let total=0;
-      for(const x of items){
-        total+=x.amt;
-        const div=document.createElement("div");
-        div.className="item";
-        div.innerHTML = `
-          <div class="meta"><div class="t">${x.name}</div><div class="s">${x.kind}</div></div>
-          <div class="amt out">− ${fmt.format(x.amt)}</div>`;
-        autoListDash.appendChild(div);
-      }
-      autoHintDash.textContent = "Общо автоматично: "+fmt.format(total);
-    }
-
-    function renderCreditsList(){
-      creditList.innerHTML="";
-      if(!state.credits.length){ creditList.innerHTML='<div class="small">Няма кредити.</div>'; return; }
-      for(const c of state.credits){
-        const endTxt = c.endYM ? ymToLabel(c.endYM) : "безкраен";
-        const div=document.createElement("div");
-        div.className="item";
-        div.innerHTML = `
-          <div class="meta"><div class="t">${c.name}</div><div class="s">Вноска: <b>${fmt.format(Number(c.pay)||0)}</b> • ${ymToLabel(c.startYM)} → ${endTxt}</div></div>
-          <div style="display:flex;flex-direction:column;gap:8px;min-width:120px">
-            <button class="secondary" data-act="edit" data-id="${c.id}">Редактирай</button>
-            <button class="danger" data-act="del" data-id="${c.id}">Изтрий</button>
-          </div>`;
-        creditList.appendChild(div);
-      }
-      creditList.querySelectorAll("button").forEach(btn=>{
-        btn.onclick=()=>{
-          const id=btn.getAttribute("data-id");
-          const act=btn.getAttribute("data-act");
-          if(act==="del"){
-            if(confirm("Да изтрия кредита?")){
-              state.credits = state.credits.filter(x=>x.id!==id);
-              persist(); render();
-            }
-            return;
-          }
-          if(act==="edit"){
-            const c=state.credits.find(x=>x.id===id);
-            if(!c) return;
-            editingCreditId=id;
-            crName.value=c.name||""; crPay.value=c.pay ?? ""; crStart.value=c.startYM||""; crEnd.value=c.endYM||"";
-            crMode.value=c.mode||"expense"; crNote.value=c.note||"";
-            window.scrollTo({top:0, behavior:"smooth"});
-          }
-        };
-      });
-    }
-
-    function rebuildDashCharts(){
-      const ymStr = state.settings.activeYM;
-      const info = computeMonth(ymStr);
-      const entries = Object.entries(info.expByCat).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
-      const labels = entries.map(([k])=>k);
-      const data = entries.map(([,v])=>v);
-      if(chartCats) chartCats.destroy();
-      chartCats = new Chart(byId("chartCats"), {
-        type:"doughnut",
-        data:{ labels, datasets:[{ data }] },
-        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{ legend:{ position:"bottom" } } }
-      });
-    }
-
-    function rebuildReportsCharts(){
-      const start24=addMonths(ymNow(), -23);
-      const months24=[]; for(let i=0;i<24;i++) months24.push(addMonths(start24,i));
-      let cum=Number(state.settings.startSavings)||0;
-      const labelsCum=[], dataCum=[];
-      for(const m of months24){
-        const s = monthTx(m).filter(t=>t.type==="saving").reduce((acc,t)=>acc+(Number(t.amt)||0),0);
-        cum += s; labelsCum.push(ymToLabel(m)); dataCum.push(cum);
-      }
-      const start12=addMonths(ymNow(), -11);
-      const months12=[]; for(let i=0;i<12;i++) months12.push(addMonths(start12,i));
-      const labelsNet=months12.map(ymToLabel);
-      const dataNet=months12.map(m=>computeMonth(m).net);
-
-      if(chartCum) chartCum.destroy();
-      if(chartNet) chartNet.destroy();
-
-      chartCum = new Chart(byId("chartCum"), {
-        type:"line",
-        data:{ labels:labelsCum, datasets:[{ data:dataCum, tension:0.25 }]},
-        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
-      });
-      chartNet = new Chart(byId("chartNet"), {
-        type:"bar",
-        data:{ labels:labelsNet, datasets:[{ data:dataNet }]},
-        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
-      });
-    }
-
-    function rebuildCarChart(){
-      const start12=addMonths(ymNow(), -11);
-      const months12=[]; for(let i=0;i<12;i++) months12.push(addMonths(start12,i));
-      const labels=months12.map(ymToLabel);
-      const data=months12.map(m=>computeCarMonth(m).total);
-      if(chartCar) chartCar.destroy();
-      chartCar = new Chart(byId("chartCar"), {
-        type:"bar",
-        data:{ labels, datasets:[{ data }]},
-        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
-      });
-      renderCarMonth();
-    }
-
-    function forecast12(){
-      const start = addMonths(state.settings.activeYM || ymNow(), 1);
-      const months = []; for(let i=0;i<12;i++) months.push(addMonths(start, i));
-      const planInc = (Number(state.plan.salary)||0) + (Number(state.plan.vouchers)||0);
-      const baseIncome = planInc>0 ? planInc : 0;
-      const desiredSave = Number(state.auto.autoSaveTarget)||0;
-
-      const rows=[];
-      for(const m of months){
-        const auto=autoExpensesForMonth(m);
-        const autoExpense=auto.reduce((s,x)=>s+(Number(x.amt)||0),0);
-        const cr=creditsForMonth(m);
-        const creditExpense=cr.filter(c=>c.mode!=="saving").reduce((s,c)=>s+(Number(c.pay)||0),0);
-        const expense = autoExpense + creditExpense;
-        const savings = desiredSave;
-        const net = baseIncome - expense - savings;
-        rows.push({m, income:baseIncome, expense, savings, net});
-      }
-      return rows;
-    }
-
-    function renderForecast(){
-      forecastList.innerHTML="";
-      const rows = forecast12();
-      for(const r of rows){
-        const div=document.createElement("div");
-        div.className="item";
-        div.innerHTML = `
-          <div class="meta"><div class="t">${ymToLabel(r.m)}</div><div class="s">Доход ${fmt.format(r.income)} • Разходи ${fmt.format(r.expense)} • Спест. ${fmt.format(r.savings)}</div></div>
-          <div class="amt ${r.net<0?"out":"in"}">${r.net<0?"−":"+"} ${fmt.format(Math.abs(r.net))}</div>`;
-        forecastList.appendChild(div);
-      }
-    }
-
-    function render(){
-      if(!state || !activeProfile) return;
-
-      ensureMonthOptions();
-      const active=state.settings.activeYM;
-      monthPill.textContent=ymToLabel(active);
-
-      // forms
-      setGoal.value = state.settings.goal ?? 10000;
-      setStart.value = state.settings.startSavings ?? 0;
-
-      autoUtilities.value = state.auto.utilities ?? 0;
-      autoPhone.value = state.auto.phone ?? 0;
-      autoRevolut.value = state.auto.revolut ?? 0;
-      autoInsuranceAmount.value = state.auto.insuranceAmount ?? 0;
-      autoInsuranceAnchor.value = state.auto.insuranceAnchorYM || ymNow();
-      limitSpending.value = state.auto.spendingLimit ?? 0;
-      autoFuelPlan.value = state.auto.fuelPlan ?? 0;
-      autoFoodPlan.value = state.auto.foodPlan ?? 0;
-      autoIncludePlans.value = state.auto.includePlansAsAuto || "no";
-      autoSaveTarget.value = state.auto.autoSaveTarget ?? 0;
-
-      carLimit.value = state.car.limit ?? 0;
-      carFuelLimit.value = state.car.fuelLimit ?? 0;
-
-      planSalary.value = state.plan.salary ?? "";
-      planVouchers.value = state.plan.vouchers ?? "";
-
-      const info=computeMonth(active);
-      kIncome.textContent=fmt.format(info.income);
-      kExpense.textContent=fmt.format(info.expense);
-      kSavings.textContent=fmt.format(info.savings);
-      kNet.textContent=fmt.format(info.net);
-
-      kIncomeNote.textContent="Транзакции: "+fmt.format(info.incomeTx);
-      kExpenseNote.textContent="Транзакции: "+fmt.format(info.expenseTx)+" • Кредити: "+fmt.format(info.creditExpense)+" • Авто: "+fmt.format(info.autoExpense);
-      kNetNote.textContent = info.net<0 ? "⚠️ Преразход" : "OK ✅";
-
-      const goal=Number(state.settings.goal)||0;
-      const now=totalSavings();
-      kGoal.textContent=fmt.format(goal);
-      kGoalNow.textContent=fmt.format(now);
-      const pct = goal>0 ? Math.min(1, now/goal) : 0;
-      goalBar.style.width=(pct*100).toFixed(1)+"%";
-      goalProgressTxt.textContent = goal>0 ? `Прогрес ${(pct*100).toFixed(1)}% • Остава ${fmt.format(Math.max(0, goal-now))}` : "Задай цел.";
-
-      renderAutoChips();
-      renderAlerts(info);
-      renderTxList(active);
-      renderTxManage(active);
-      renderAutoDash(info);
-      renderCreditsList();
-      renderCarMonth();
-      renderForecast();
-
-      if(views.dash.style.display!=="none") setTimeout(rebuildDashCharts, 60);
-
-      persist();
-    }
-
-    // events
-    selMonth.onchange=()=>{ state.settings.activeYM=selMonth.value; persist(); render(); };
-
-    txType.onchange=fillCategorySelect;
-    btnClearTx.onclick=()=>{ txAmt.value=""; txNote.value=""; txType.value="expense"; fillCategorySelect(); };
-
-    btnAddTx.onclick=()=>{
-      const date = txDate.value || new Date().toISOString().slice(0,10);
-      const yms = ymFromDate(date);
-      const type = txType.value;
-      const cat = txCat.value;
-      const amt = Number(txAmt.value);
-      if(!date || !yms){ alert("Избери дата."); return; }
-      if(!cat || !Number.isFinite(amt) || amt<=0){ alert("Категория и сума > 0."); return; }
-      const note=(txNote.value||"").trim();
-      state.tx.push({ id:uuid(), date, ym:yms, type, cat, amt, note });
-      state.settings.activeYM=yms;
-      txAmt.value=""; txNote.value="";
-      persist(); setTab("dash"); render();
-    };
-
-    quickSalary.onclick=()=>{ txType.value="income"; fillCategorySelect(); txCat.value="Заплата"; setTab("add"); txAmt.focus(); };
-    quickVouchers.onclick=()=>{ txType.value="income"; fillCategorySelect(); txCat.value="Ваучери"; setTab("add"); txAmt.focus(); };
-    quickFuel.onclick=()=>{ txType.value="expense"; fillCategorySelect(); txCat.value="Гориво"; setTab("add"); txAmt.focus(); };
-
-    btnSaveAuto.onclick=()=>{
-      state.auto.utilities = Number(autoUtilities.value)||0;
-      state.auto.phone = Number(autoPhone.value)||0;
-      state.auto.revolut = Number(autoRevolut.value)||0;
-      state.auto.insuranceAmount = Number(autoInsuranceAmount.value)||0;
-      state.auto.insuranceAnchorYM = autoInsuranceAnchor.value || ymNow();
-      state.auto.spendingLimit = Number(limitSpending.value)||0;
-      state.auto.fuelPlan = Number(autoFuelPlan.value)||0;
-      state.auto.foodPlan = Number(autoFoodPlan.value)||0;
-      state.auto.includePlansAsAuto = autoIncludePlans.value || "no";
-      state.auto.autoSaveTarget = Number(autoSaveTarget.value)||0;
-      persist(); render(); alert("Запазено ✅");
-    };
-
-    btnSaveCar.onclick=()=>{
-      state.car.limit = Number(carLimit.value)||0;
-      state.car.fuelLimit = Number(carFuelLimit.value)||0;
-      persist(); render(); alert("Запазено ✅");
-    };
-
-    btnNewCredit.onclick=()=>{
-      editingCreditId=null;
-      crName.value=""; crPay.value=""; crStart.value=ymNow(); crEnd.value="";
-      crMode.value="expense"; crNote.value="";
-    };
-
-    btnSaveCredit.onclick=()=>{
-      const name=(crName.value||"").trim();
-      const pay=Number(crPay.value);
-      const startYM=crStart.value;
-      const endYM=crEnd.value || null;
-      const mode=crMode.value;
-      const note=(crNote.value||"").trim();
-
-      if(!name){ alert("Въведи име."); return; }
-      if(!Number.isFinite(pay)||pay<=0){ alert("Вноска > 0."); return; }
-      if(!startYM){ alert("Начален месец."); return; }
-      if(endYM && endYM<startYM){ alert("Крайният месец е преди началния."); return; }
-
-      if(editingCreditId){
-        const c=state.credits.find(x=>x.id===editingCreditId);
-        if(c){ c.name=name; c.pay=pay; c.startYM=startYM; c.endYM=endYM; c.mode=mode; c.note=note; }
-      } else {
-        state.credits.push({ id:uuid(), name, pay, startYM, endYM, mode, note });
-      }
-      editingCreditId=null;
-      persist(); render(); alert("Запазено ✅");
-    };
-
-    btnSavePlan.onclick=()=>{
-      state.plan.salary = planSalary.value==="" ? 0 : Number(planSalary.value);
-      state.plan.vouchers = planVouchers.value==="" ? 0 : Number(planVouchers.value);
-      persist(); render(); alert("Запазено ✅");
-    };
-
-    btnSaveSettings.onclick=()=>{
-      state.settings.goal = Number(setGoal.value)||0;
-      state.settings.startSavings = Number(setStart.value)||0;
-      persist(); render(); alert("Запазено ✅");
-    };
-
-    btnSwitchProfile.onclick = showOverlay;
-    btnLogout.onclick = ()=>{
-      // keep activeProfileId but show overlay (if no PIN, will auto-enter; so clear it)
-      setActiveProfileId("");
-      activeProfile=null;
-      state=null;
-      // destroy charts
-      try{ chartCats?.destroy(); chartCum?.destroy(); chartNet?.destroy(); chartCar?.destroy(); }catch(e){}
-      showOverlay();
-    };
-
-    // Export/Import active profile
-    btnExportProfile.onclick = ()=>{
-      if(!activeProfile || !state) return;
-      const payload = {
-        version: "ULTRA++-profiles-v1",
-        exportedAt: new Date().toISOString(),
-        profile: { name: activeProfile.name, pinHash: activeProfile.pinHash || null },
-        state
-      };
-      const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);
-      const safeName = activeProfile.name.replace(/[^\p{L}\p{N}_-]+/gu, "_");
-      a.download=`budget-${safeName}-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    };
-
-    btnImportProfile.onclick = ()=> importProfileFile.click();
-    importProfileFile.onchange = async ()=>{
-      const f = importProfileFile.files?.[0];
-      if(!f) return;
-      try{
-        const text = await f.text();
-        const parsed = JSON.parse(text);
-        if(!parsed || !parsed.profile || !parsed.state) throw new Error("bad");
-        if(!parsed.profile.name) throw new Error("bad");
-        if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
-
-        // import into NEW profile by default (safer)
-        const profiles = loadProfiles();
-        const id = uuid();
-        profiles.push({
-          id,
-          name: (parsed.profile.name || "Импорт").trim(),
-          pinHash: parsed.profile.pinHash || null,
-          createdAt: new Date().toISOString().slice(0,10),
-          lastUsed: ""
-        });
-        saveProfiles(profiles);
-        saveStateForProfile(id, parsed.state);
-        await activateProfile(id);
-        alert("Импорт успешно ✅");
-      }catch(e){
-        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
-      }finally{
-        importProfileFile.value = "";
-      }
-    };
-
-    btnReset.onclick=()=>{
-      if(!activeProfile?.id || !state) return;
-      if(confirm("Сигурен ли си? Това ще изтрие всички данни на този профил.")){
-        state = defaultState();
-        persist();
-        render();
-        alert("Изтрито.");
-      }
-    };
-
-    window.addEventListener("resize", ()=>{
-      clearTimeout(window.__rz);
-      window.__rz=setTimeout(()=>{
-        if(!state) return;
-        if(views.dash.style.display!=="none") rebuildDashCharts();
-        if(views.reports.style.display!=="none") rebuildReportsCharts();
-        if(views.car.style.display!=="none") rebuildCarChart();
-      }, 150);
-    });
-
-    // init
-    txType.value="expense";
-    fillCategorySelect();
-    txDate.value=new Date().toISOString().slice(0,10);
-    crStart.value=ymNow();
-
-    ensureProfileOnStart();
-  </script>
+    showOverlay();
+  };
+</script>
 </body>
 </html>
