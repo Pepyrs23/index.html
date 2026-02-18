@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0b1220" />
-  <title>Бюджет ULTRA+</title>
+  <title>Бюджет ULTRA++ (Профили)</title>
   <style>
     :root{
       --bg:#0b1220; --card:#101a33; --muted:#93a4c7; --text:#e7efff;
@@ -96,21 +96,84 @@
     }
 
     /* ✅ FIX: Chart.js infinite growth */
-    .chartBox{
-      height:240px;
-      position:relative;
+    .chartBox{ height:240px; position:relative; }
+    .chartBox canvas{ width:100% !important; height:100% !important; display:block; }
+
+    /* Login overlay */
+    .overlay{
+      position:fixed; inset:0;
+      background:linear-gradient(180deg,rgba(11,18,32,.96),rgba(7,12,22,.96));
+      padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom) 14px;
+      display:none;
+      overflow:auto;
+      z-index:9999;
     }
-    .chartBox canvas{
-      width:100% !important;
-      height:100% !important;
-      display:block;
-    }
+    .overlay header{padding-top:18px}
+    .mutedLink{color:var(--muted); text-decoration:underline; cursor:pointer}
   </style>
 </head>
 <body>
+  <!-- LOGIN / PROFILE OVERLAY -->
+  <div class="overlay" id="profileOverlay">
+    <header>
+      <h1>👤 Профили</h1>
+      <div class="pill" id="overlayPill">ULTRA++</div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Избери профил</div>
+        <div class="list" id="profileList"></div>
+        <div class="hr"></div>
+        <button class="secondary" id="btnShowCreate">+ Нов профил</button>
+        <div class="small" style="margin-top:10px">
+          Профилите са <b>локални</b> (само на този телефон). За прехвърляне ползвай Export/Import.
+        </div>
+      </div>
+
+      <div class="card" id="createBox" style="display:none">
+        <div class="label">Създай профил</div>
+        <input id="newName" placeholder="Име (напр. Иван)" />
+        <input id="newPin" type="password" inputmode="numeric" placeholder="PIN (по желание)" style="margin-top:10px" />
+        <div class="two" style="margin-top:10px">
+          <button id="btnCreate">Създай</button>
+          <button class="secondary" id="btnCancelCreate">Отказ</button>
+        </div>
+        <div class="small" style="margin-top:10px">
+          Ако оставиш PIN празен → профилът ще влиза без PIN.
+        </div>
+      </div>
+
+      <div class="card" id="loginBox" style="display:none">
+        <div class="label">Вход</div>
+        <div class="small" id="loginHint">—</div>
+        <input id="loginPin" type="password" inputmode="numeric" placeholder="PIN" style="margin-top:10px" />
+        <div class="two" style="margin-top:10px">
+          <button id="btnLogin">Влез</button>
+          <button class="secondary" id="btnCancelLogin">Назад</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Импорт (на профил) – ако си сменяш телефона</div>
+        <div class="small">Избери JSON файл, който си експортирал от стария телефон.</div>
+        <div class="hr"></div>
+        <button class="secondary" id="btnOverlayImport">Импорт JSON</button>
+        <input id="overlayImportFile" type="file" accept="application/json" style="display:none" />
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
   <header>
-    <h1>📱 Бюджет ULTRA+</h1>
-    <div class="pill" id="monthPill">—</div>
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+      <h1>📱 Бюджет ULTRA++</h1>
+      <div class="small" id="profileNameLine">Профил: —</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="pill" id="monthPill">—</div>
+      <button class="secondary" id="btnProfiles" style="width:auto;padding:8px 10px;border-radius:999px">👤</button>
+    </div>
   </header>
 
   <div class="tabs">
@@ -181,9 +244,7 @@
 
     <div class="card">
       <div class="label">Разходи по категории (този месец)</div>
-      <div class="chartBox">
-        <canvas id="chartCats"></canvas>
-      </div>
+      <div class="chartBox"><canvas id="chartCats"></canvas></div>
       <div class="small" style="margin-top:8px">Включва и авто разходи/кредити.</div>
     </div>
 
@@ -246,7 +307,7 @@
   <section id="viewAuto" class="grid" style="display:none">
     <div class="card">
       <div class="label">Автоматични разходи (фикс)</div>
-      <div class="small">Попълнено по твоя бюджет. + предупреждения и цел за автоматично спестяване.</div>
+      <div class="small">Попълнено по твоя бюджет. (можеш да променяш)</div>
       <div class="hr"></div>
 
       <div class="two">
@@ -315,7 +376,7 @@
   <section id="viewCredits" class="grid" style="display:none">
     <div class="card">
       <div class="label">Кредити – автоматично приспадане</div>
-      <div class="small">Кредит 1 е настроен да спира през Юни 2026.</div>
+      <div class="small">Кредит 1 е настроен да спира през Юни 2026 (можеш да го редактираш).</div>
       <div class="hr"></div>
 
       <input id="crName" placeholder="Име (напр. Кредит 1)" />
@@ -366,9 +427,7 @@
 
     <div class="card">
       <div class="label">Графика: разходи за кола (12 месеца)</div>
-      <div class="chartBox">
-        <canvas id="chartCar"></canvas>
-      </div>
+      <div class="chartBox"><canvas id="chartCar"></canvas></div>
     </div>
 
     <div class="card">
@@ -382,7 +441,7 @@
   <section id="viewPlan" class="grid" style="display:none">
     <div class="card">
       <div class="label">План доход + Прогноза (12 месеца)</div>
-      <div class="small">Ако оставиш празно → ще ползва средно от реални доходи.</div>
+      <div class="small">Планът е по профил (всеки си го настройва отделно).</div>
       <div class="hr"></div>
       <div class="two">
         <div>
@@ -407,16 +466,12 @@
   <section id="viewReports" class="grid" style="display:none">
     <div class="card">
       <div class="label">Натрупани спестявания (24 месеца)</div>
-      <div class="chartBox">
-        <canvas id="chartCum"></canvas>
-      </div>
+      <div class="chartBox"><canvas id="chartCum"></canvas></div>
     </div>
 
     <div class="card">
       <div class="label">Нетно по месеци (12 месеца)</div>
-      <div class="chartBox">
-        <canvas id="chartNet"></canvas>
-      </div>
+      <div class="chartBox"><canvas id="chartNet"></canvas></div>
     </div>
   </section>
 
@@ -432,23 +487,47 @@
     </div>
 
     <div class="card">
-      <div class="label">Backup</div>
-      <div class="two">
-        <button class="secondary" id="btnExport">Експорт JSON</button>
-        <button class="secondary" id="btnImport">Импорт JSON</button>
-      </div>
-      <input id="importFile" type="file" accept="application/json" style="display:none" />
+      <div class="label">Профил</div>
+      <div class="small">Това е локален профил само за този телефон.</div>
       <div class="hr"></div>
-      <button class="danger" id="btnReset">Изтрий всички данни</button>
+      <div class="two">
+        <button class="secondary" id="btnSwitchProfile">Смени профил</button>
+        <button class="secondary" id="btnLogout">Изход</button>
+      </div>
+      <div class="hr"></div>
+      <div class="two">
+        <button class="secondary" id="btnExportProfile">Export (профил)</button>
+        <button class="secondary" id="btnImportProfile">Import (профил)</button>
+      </div>
+      <input id="importProfileFile" type="file" accept="application/json" style="display:none" />
+      <div class="small" style="margin-top:10px">
+        Export/Import е най-добрият вариант при смяна на телефон (iCloud Drive / Files).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Изтриване</div>
+      <div class="small">Изтрива само данните на текущия профил.</div>
+      <div class="hr"></div>
+      <button class="danger" id="btnReset">Изтрий данните на профила</button>
+      <div class="small" style="margin-top:10px">
+        Ако искаш да изтриеш и самия профил → от „Профили“ (👤) и „Изтрий“.
+      </div>
     </div>
   </section>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    const KEY = "budget_ultrap_v1";
+    // =========================
+    // PROFILE SYSTEM (LOCAL)
+    // =========================
+    const PROFILES_KEY = "budget_ultra_profiles_v1";
+    const ACTIVE_PROFILE_KEY = "budget_ultra_active_profile_v1";
+
     const monthNamesBG = ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"];
     const fmt = new Intl.NumberFormat('bg-BG', { style:'currency', currency:'EUR' });
 
+    const byId = (id)=>document.getElementById(id);
     const pad2 = (n)=>String(n).padStart(2,"0");
     const ymNow = ()=>{ const d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1); };
     const ymFromDate = (dateStr)=> dateStr ? dateStr.slice(0,7) : "";
@@ -460,35 +539,325 @@
       return d.getFullYear()+"-"+pad2(d.getMonth()+1);
     };
 
-    function load(){ try{ const raw=localStorage.getItem(KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-    function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+    function uuid(){
+      if (window.crypto?.randomUUID) return crypto.randomUUID();
+      return "id_"+Math.random().toString(16).slice(2)+Date.now().toString(16);
+    }
 
-    const nowYM = ymNow();
-    const defaultState = {
-      settings:{ activeYM: nowYM, goal: 10000, startSavings: 0 },
-      plan:{ salary: 1350, vouchers: 100 },
-      auto:{
-        utilities: 60, phone: 55, revolut: 14,
-        fuelPlan: 70, foodPlan: 60, includePlansAsAuto: "no",
-        insuranceAmount: 35, insuranceAnchorYM: nowYM,
-        spendingLimit: 0, autoSaveTarget: 0
-      },
-      car:{ limit: 200, fuelLimit: 100 },
-      credits:[
-        { id: crypto.randomUUID(), name:"Кредит 1 (до юни)", pay:125, startYM: nowYM, endYM:"2026-06", mode:"expense", note:"Автоматично до Юни 2026." },
-        { id: crypto.randomUUID(), name:"Кредит 2", pay:150, startYM: nowYM, endYM:null, mode:"expense", note:"Дългосрочен." }
-      ],
-      tx:[]
+    async function sha256(text){
+      const enc = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    }
+
+    function loadProfiles(){
+      try{
+        const raw = localStorage.getItem(PROFILES_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch(e){ return []; }
+    }
+    function saveProfiles(list){
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+    }
+    function getActiveProfileId(){
+      return localStorage.getItem(ACTIVE_PROFILE_KEY) || "";
+    }
+    function setActiveProfileId(id){
+      localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+    }
+    function profileStoreKey(id){ return "budget_ultra_profile_state_v1__" + id; }
+
+    function loadStateForProfile(profileId){
+      const key = profileStoreKey(profileId);
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      }catch(e){ return null; }
+    }
+    function saveStateForProfile(profileId, stateObj){
+      const key = profileStoreKey(profileId);
+      localStorage.setItem(key, JSON.stringify(stateObj));
+    }
+
+    function defaultState(){
+      const nowYM = ymNow();
+      return {
+        settings:{ activeYM: nowYM, goal: 10000, startSavings: 0 },
+        plan:{ salary: 1350, vouchers: 100 },
+        auto:{
+          utilities: 60, phone: 55, revolut: 14,
+          fuelPlan: 70, foodPlan: 60, includePlansAsAuto: "no",
+          insuranceAmount: 35, insuranceAnchorYM: nowYM,
+          spendingLimit: 0, autoSaveTarget: 0
+        },
+        car:{ limit: 200, fuelLimit: 100 },
+        credits:[
+          { id: uuid(), name:"Кредит 1 (до юни)", pay:125, startYM: nowYM, endYM:"2026-06", mode:"expense", note:"Автоматично до Юни 2026." },
+          { id: uuid(), name:"Кредит 2", pay:150, startYM: nowYM, endYM:null, mode:"expense", note:"Дългосрочен." }
+        ],
+        tx:[]
+      };
+    }
+
+    let activeProfile = null; // {id,name,pinHash?}
+    let state = null;
+
+    const profileOverlay = byId("profileOverlay");
+    const profileList = byId("profileList");
+    const btnProfiles = byId("btnProfiles");
+    const profileNameLine = byId("profileNameLine");
+
+    const btnShowCreate = byId("btnShowCreate");
+    const createBox = byId("createBox");
+    const newName = byId("newName");
+    const newPin = byId("newPin");
+    const btnCreate = byId("btnCreate");
+    const btnCancelCreate = byId("btnCancelCreate");
+
+    const loginBox = byId("loginBox");
+    const loginHint = byId("loginHint");
+    const loginPin = byId("loginPin");
+    const btnLogin = byId("btnLogin");
+    const btnCancelLogin = byId("btnCancelLogin");
+    let pendingLoginProfileId = null;
+
+    const btnOverlayImport = byId("btnOverlayImport");
+    const overlayImportFile = byId("overlayImportFile");
+
+    function showOverlay(){
+      profileOverlay.style.display = "block";
+      createBox.style.display = "none";
+      loginBox.style.display = "none";
+      newName.value = "";
+      newPin.value = "";
+      loginPin.value = "";
+      pendingLoginProfileId = null;
+      renderProfileList();
+    }
+    function hideOverlay(){
+      profileOverlay.style.display = "none";
+    }
+
+    btnProfiles.onclick = showOverlay;
+
+    btnShowCreate.onclick = ()=>{
+      createBox.style.display = "block";
+      loginBox.style.display = "none";
+      newName.focus();
     };
-    let state = load() || structuredClone(defaultState);
+    btnCancelCreate.onclick = ()=>{
+      createBox.style.display = "none";
+    };
 
+    btnCancelLogin.onclick = ()=>{
+      loginBox.style.display = "none";
+      pendingLoginProfileId = null;
+      loginPin.value = "";
+    };
+
+    function renderProfileList(){
+      const profiles = loadProfiles();
+      profileList.innerHTML = "";
+      if(!profiles.length){
+        profileList.innerHTML = `<div class="small">Няма профили. Създай първия от „Нов профил“.</div>`;
+        return;
+      }
+
+      for(const p of profiles){
+        const needsPin = !!p.pinHash;
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="meta">
+            <div class="t">${p.name}</div>
+            <div class="s">${needsPin ? "🔒 PIN" : "Без PIN"} • ${p.lastUsed ? ("Последно: "+p.lastUsed) : ""}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+            <button class="secondary" data-act="open" data-id="${p.id}">Вход</button>
+            <button class="danger" data-act="del" data-id="${p.id}">Изтрий</button>
+          </div>
+        `;
+        profileList.appendChild(div);
+      }
+
+      profileList.querySelectorAll("button").forEach(btn=>{
+        btn.onclick = async ()=>{
+          const id = btn.getAttribute("data-id");
+          const act = btn.getAttribute("data-act");
+          const profiles = loadProfiles();
+          const p = profiles.find(x=>x.id===id);
+          if(!p) return;
+
+          if(act==="del"){
+            if(confirm(`Да изтрия профил "${p.name}"? Това изтрива и всичките му данни.`)){
+              const filtered = profiles.filter(x=>x.id!==id);
+              saveProfiles(filtered);
+              // delete state
+              localStorage.removeItem(profileStoreKey(id));
+              // if active
+              if(getActiveProfileId()===id){
+                setActiveProfileId("");
+                activeProfile=null;
+                state=null;
+              }
+              renderProfileList();
+            }
+            return;
+          }
+
+          if(act==="open"){
+            if(p.pinHash){
+              pendingLoginProfileId = id;
+              loginHint.textContent = `Профил: ${p.name}`;
+              loginBox.style.display = "block";
+              createBox.style.display = "none";
+              loginPin.value = "";
+              loginPin.focus();
+            } else {
+              await activateProfile(id);
+              hideOverlay();
+            }
+          }
+        };
+      });
+    }
+
+    btnCreate.onclick = async ()=>{
+      const name = (newName.value || "").trim();
+      const pin = (newPin.value || "").trim();
+      if(!name){ alert("Въведи име."); return; }
+
+      const profiles = loadProfiles();
+      if(profiles.some(p=>p.name.toLowerCase()===name.toLowerCase())){
+        if(!confirm("Има профил със същото име. Да продължа?")) return;
+      }
+
+      const id = uuid();
+      const pinHash = pin ? await sha256(pin) : "";
+      const p = { id, name, pinHash: pinHash || null, createdAt: new Date().toISOString().slice(0,10), lastUsed: "" };
+      profiles.push(p);
+      saveProfiles(profiles);
+
+      // init state
+      saveStateForProfile(id, defaultState());
+
+      await activateProfile(id);
+      hideOverlay();
+    };
+
+    btnLogin.onclick = async ()=>{
+      const profiles = loadProfiles();
+      const id = pendingLoginProfileId;
+      const p = profiles.find(x=>x.id===id);
+      if(!p){ alert("Профилът липсва."); return; }
+      const pin = (loginPin.value || "").trim();
+      const h = await sha256(pin);
+      if(h !== p.pinHash){
+        alert("Грешен PIN.");
+        return;
+      }
+      await activateProfile(id);
+      hideOverlay();
+    };
+
+    async function activateProfile(id){
+      const profiles = loadProfiles();
+      const p = profiles.find(x=>x.id===id);
+      if(!p){ alert("Профилът липсва."); return; }
+
+      // load or init state
+      let s = loadStateForProfile(id);
+      if(!s){
+        s = defaultState();
+        saveStateForProfile(id, s);
+      }
+
+      // update last used
+      const today = new Date().toISOString().slice(0,10);
+      p.lastUsed = today;
+      saveProfiles(profiles);
+
+      activeProfile = p;
+      state = s;
+      setActiveProfileId(id);
+
+      profileNameLine.textContent = "Профил: " + p.name;
+      render();
+    }
+
+    // Import from overlay (creates profile if needed)
+    btnOverlayImport.onclick = ()=> overlayImportFile.click();
+    overlayImportFile.onchange = async ()=>{
+      const f = overlayImportFile.files?.[0];
+      if(!f) return;
+      try{
+        const text = await f.text();
+        const parsed = JSON.parse(text);
+
+        // expected shape: {profile:{name,pinHash?}, state:{...}}
+        if(!parsed || !parsed.profile || !parsed.state) throw new Error("bad");
+        if(!parsed.profile.name) throw new Error("bad");
+        if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
+
+        const profiles = loadProfiles();
+
+        // create new profile (avoid overwrite by default)
+        const importedName = (parsed.profile.name || "Импорт").trim();
+        const id = uuid();
+        const p = {
+          id,
+          name: importedName,
+          pinHash: parsed.profile.pinHash || null,
+          createdAt: new Date().toISOString().slice(0,10),
+          lastUsed: ""
+        };
+        profiles.push(p);
+        saveProfiles(profiles);
+        saveStateForProfile(id, parsed.state);
+
+        await activateProfile(id);
+        hideOverlay();
+        alert("Импорт успешно ✅");
+      }catch(e){
+        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
+      }finally{
+        overlayImportFile.value = "";
+      }
+    };
+
+    // Auto prompt overlay if no active profile
+    function ensureProfileOnStart(){
+      const id = getActiveProfileId();
+      const profiles = loadProfiles();
+      if(id && profiles.some(p=>p.id===id)){
+        // activate without asking pin (we don't store session pin; if profile has pin, require overlay)
+        const p = profiles.find(x=>x.id===id);
+        if(p.pinHash){
+          // show overlay so user enters PIN
+          showOverlay();
+          // auto open login
+          pendingLoginProfileId = id;
+          loginHint.textContent = `Профил: ${p.name}`;
+          loginBox.style.display = "block";
+          createBox.style.display = "none";
+          setTimeout(()=>loginPin.focus(), 50);
+        } else {
+          activateProfile(id);
+        }
+      } else {
+        showOverlay();
+      }
+    }
+
+    // =========================
+    // APP (same as ULTRA+, but state is per profile)
+    // =========================
     const cats = {
       income:["Заплата","Ваучери","Друг доход"],
       expense:["Храна (кеш)","Гориво","Комунални","Телефон","Revolut","Гражданска","Покупки","Излизане","Кола: Ремонти","Кола: Такси","Кола: Винетка/Паркинг","Друго"],
       saving:["Аварийни","Буфер","Дългосрочни"]
     };
 
-    const byId = (id)=>document.getElementById(id);
     const tabs = {
       dash: byId("tabDash"), add: byId("tabAdd"), auto: byId("tabAuto"), credits: byId("tabCredits"),
       car: byId("tabCar"), plan: byId("tabPlan"), reports: byId("tabReports"), settings: byId("tabSettings")
@@ -561,6 +930,7 @@
     const autoFoodPlan = byId("autoFoodPlan");
     const autoIncludePlans = byId("autoIncludePlans");
     const autoSaveTarget = byId("autoSaveTarget");
+    const btnSaveAuto = byId("btnSaveAuto");
 
     const crName = byId("crName");
     const crPay = byId("crPay");
@@ -587,12 +957,20 @@
     const setGoal = byId("setGoal");
     const setStart = byId("setStart");
     const btnSaveSettings = byId("btnSaveSettings");
-    const btnExport = byId("btnExport");
-    const btnImport = byId("btnImport");
-    const importFile = byId("importFile");
+
+    const btnSwitchProfile = byId("btnSwitchProfile");
+    const btnLogout = byId("btnLogout");
+    const btnExportProfile = byId("btnExportProfile");
+    const btnImportProfile = byId("btnImportProfile");
+    const importProfileFile = byId("importProfileFile");
     const btnReset = byId("btnReset");
 
     let chartCum=null, chartNet=null, chartCats=null, chartCar=null;
+
+    function persist(){
+      if(!activeProfile?.id) return;
+      saveStateForProfile(activeProfile.id, state);
+    }
 
     function fillCategorySelect(){
       txCat.innerHTML="";
@@ -793,7 +1171,7 @@
           const id=btn.getAttribute("data-id");
           if(confirm("Изтриване на транзакцията?")){
             state.tx = state.tx.filter(x=>x.id!==id);
-            save(); render();
+            persist(); render();
           }
         };
       });
@@ -840,7 +1218,7 @@
           if(act==="del"){
             if(confirm("Да изтрия кредита?")){
               state.credits = state.credits.filter(x=>x.id!==id);
-              save(); render();
+              persist(); render();
             }
             return;
           }
@@ -866,12 +1244,7 @@
       chartCats = new Chart(byId("chartCats"), {
         type:"doughnut",
         data:{ labels, datasets:[{ data }] },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          animation:false,
-          plugins:{ legend:{ position:"bottom" } }
-        }
+        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{ legend:{ position:"bottom" } } }
       });
     }
 
@@ -895,25 +1268,12 @@
       chartCum = new Chart(byId("chartCum"), {
         type:"line",
         data:{ labels:labelsCum, datasets:[{ data:dataCum, tension:0.25 }]},
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          animation:false,
-          plugins:{legend:{display:false}},
-          scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } }
-        }
+        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
       });
-
       chartNet = new Chart(byId("chartNet"), {
         type:"bar",
         data:{ labels:labelsNet, datasets:[{ data:dataNet }]},
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          animation:false,
-          plugins:{legend:{display:false}},
-          scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } }
-        }
+        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
       });
     }
 
@@ -926,13 +1286,7 @@
       chartCar = new Chart(byId("chartCar"), {
         type:"bar",
         data:{ labels, datasets:[{ data }]},
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          animation:false,
-          plugins:{legend:{display:false}},
-          scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } }
-        }
+        options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:(v)=>fmt.format(v)} } } }
       });
       renderCarMonth();
     }
@@ -972,10 +1326,13 @@
     }
 
     function render(){
+      if(!state || !activeProfile) return;
+
       ensureMonthOptions();
       const active=state.settings.activeYM;
       monthPill.textContent=ymToLabel(active);
 
+      // forms
       setGoal.value = state.settings.goal ?? 10000;
       setStart.value = state.settings.startSavings ?? 0;
 
@@ -1025,11 +1382,11 @@
 
       if(views.dash.style.display!=="none") setTimeout(rebuildDashCharts, 60);
 
-      save();
+      persist();
     }
 
     // events
-    selMonth.onchange=()=>{ state.settings.activeYM=selMonth.value; save(); render(); };
+    selMonth.onchange=()=>{ state.settings.activeYM=selMonth.value; persist(); render(); };
 
     txType.onchange=fillCategorySelect;
     btnClearTx.onclick=()=>{ txAmt.value=""; txNote.value=""; txType.value="expense"; fillCategorySelect(); };
@@ -1043,17 +1400,17 @@
       if(!date || !yms){ alert("Избери дата."); return; }
       if(!cat || !Number.isFinite(amt) || amt<=0){ alert("Категория и сума > 0."); return; }
       const note=(txNote.value||"").trim();
-      state.tx.push({ id:crypto.randomUUID(), date, ym:yms, type, cat, amt, note });
+      state.tx.push({ id:uuid(), date, ym:yms, type, cat, amt, note });
       state.settings.activeYM=yms;
       txAmt.value=""; txNote.value="";
-      save(); setTab("dash"); render();
+      persist(); setTab("dash"); render();
     };
 
     quickSalary.onclick=()=>{ txType.value="income"; fillCategorySelect(); txCat.value="Заплата"; setTab("add"); txAmt.focus(); };
     quickVouchers.onclick=()=>{ txType.value="income"; fillCategorySelect(); txCat.value="Ваучери"; setTab("add"); txAmt.focus(); };
     quickFuel.onclick=()=>{ txType.value="expense"; fillCategorySelect(); txCat.value="Гориво"; setTab("add"); txAmt.focus(); };
 
-    byId("btnSaveAuto").onclick=()=>{
+    btnSaveAuto.onclick=()=>{
       state.auto.utilities = Number(autoUtilities.value)||0;
       state.auto.phone = Number(autoPhone.value)||0;
       state.auto.revolut = Number(autoRevolut.value)||0;
@@ -1064,13 +1421,13 @@
       state.auto.foodPlan = Number(autoFoodPlan.value)||0;
       state.auto.includePlansAsAuto = autoIncludePlans.value || "no";
       state.auto.autoSaveTarget = Number(autoSaveTarget.value)||0;
-      save(); render(); alert("Запазено ✅");
+      persist(); render(); alert("Запазено ✅");
     };
 
     btnSaveCar.onclick=()=>{
       state.car.limit = Number(carLimit.value)||0;
       state.car.fuelLimit = Number(carFuelLimit.value)||0;
-      save(); render(); alert("Запазено ✅");
+      persist(); render(); alert("Запазено ✅");
     };
 
     btnNewCredit.onclick=()=>{
@@ -1096,57 +1453,99 @@
         const c=state.credits.find(x=>x.id===editingCreditId);
         if(c){ c.name=name; c.pay=pay; c.startYM=startYM; c.endYM=endYM; c.mode=mode; c.note=note; }
       } else {
-        state.credits.push({ id:crypto.randomUUID(), name, pay, startYM, endYM, mode, note });
+        state.credits.push({ id:uuid(), name, pay, startYM, endYM, mode, note });
       }
       editingCreditId=null;
-      save(); render(); alert("Запазено ✅");
+      persist(); render(); alert("Запазено ✅");
     };
 
     btnSavePlan.onclick=()=>{
       state.plan.salary = planSalary.value==="" ? 0 : Number(planSalary.value);
       state.plan.vouchers = planVouchers.value==="" ? 0 : Number(planVouchers.value);
-      save(); render(); alert("Запазено ✅");
+      persist(); render(); alert("Запазено ✅");
     };
 
     btnSaveSettings.onclick=()=>{
       state.settings.goal = Number(setGoal.value)||0;
       state.settings.startSavings = Number(setStart.value)||0;
-      save(); render(); alert("Запазено ✅");
+      persist(); render(); alert("Запазено ✅");
     };
 
-    btnExport.onclick=()=>{
-      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    btnSwitchProfile.onclick = showOverlay;
+    btnLogout.onclick = ()=>{
+      // keep activeProfileId but show overlay (if no PIN, will auto-enter; so clear it)
+      setActiveProfileId("");
+      activeProfile=null;
+      state=null;
+      // destroy charts
+      try{ chartCats?.destroy(); chartCum?.destroy(); chartNet?.destroy(); chartCar?.destroy(); }catch(e){}
+      showOverlay();
+    };
+
+    // Export/Import active profile
+    btnExportProfile.onclick = ()=>{
+      if(!activeProfile || !state) return;
+      const payload = {
+        version: "ULTRA++-profiles-v1",
+        exportedAt: new Date().toISOString(),
+        profile: { name: activeProfile.name, pinHash: activeProfile.pinHash || null },
+        state
+      };
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
       const a=document.createElement("a");
       a.href=URL.createObjectURL(blob);
-      a.download="budget-ultrap-backup.json";
+      const safeName = activeProfile.name.replace(/[^\p{L}\p{N}_-]+/gu, "_");
+      a.download=`budget-${safeName}-${new Date().toISOString().slice(0,10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
     };
 
-    btnImport.onclick=()=>importFile.click();
-    importFile.onchange=async ()=>{
-      const f=importFile.files?.[0];
+    btnImportProfile.onclick = ()=> importProfileFile.click();
+    importProfileFile.onchange = async ()=>{
+      const f = importProfileFile.files?.[0];
       if(!f) return;
       try{
-        const text=await f.text();
-        const parsed=JSON.parse(text);
-        if(!parsed || !parsed.settings || !parsed.auto || !Array.isArray(parsed.tx) || !Array.isArray(parsed.credits)) throw new Error("bad");
-        state=parsed;
-        save(); render(); alert("Импорт успешно ✅");
-      }catch(e){ alert("Неуспешен импорт."); }
-      finally{ importFile.value=""; }
+        const text = await f.text();
+        const parsed = JSON.parse(text);
+        if(!parsed || !parsed.profile || !parsed.state) throw new Error("bad");
+        if(!parsed.profile.name) throw new Error("bad");
+        if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
+
+        // import into NEW profile by default (safer)
+        const profiles = loadProfiles();
+        const id = uuid();
+        profiles.push({
+          id,
+          name: (parsed.profile.name || "Импорт").trim(),
+          pinHash: parsed.profile.pinHash || null,
+          createdAt: new Date().toISOString().slice(0,10),
+          lastUsed: ""
+        });
+        saveProfiles(profiles);
+        saveStateForProfile(id, parsed.state);
+        await activateProfile(id);
+        alert("Импорт успешно ✅");
+      }catch(e){
+        alert("Неуспешен импорт. Увери се, че файлът е Export от ULTRA++.");
+      }finally{
+        importProfileFile.value = "";
+      }
     };
 
     btnReset.onclick=()=>{
-      if(confirm("Сигурен ли си? Това ще изтрие всички данни.")){
-        state = structuredClone(defaultState);
-        save(); render(); alert("Изтрито.");
+      if(!activeProfile?.id || !state) return;
+      if(confirm("Сигурен ли си? Това ще изтрие всички данни на този профил.")){
+        state = defaultState();
+        persist();
+        render();
+        alert("Изтрито.");
       }
     };
 
     window.addEventListener("resize", ()=>{
       clearTimeout(window.__rz);
       window.__rz=setTimeout(()=>{
+        if(!state) return;
         if(views.dash.style.display!=="none") rebuildDashCharts();
         if(views.reports.style.display!=="none") rebuildReportsCharts();
         if(views.car.style.display!=="none") rebuildCarChart();
@@ -1158,7 +1557,8 @@
     fillCategorySelect();
     txDate.value=new Date().toISOString().slice(0,10);
     crStart.value=ymNow();
-    render();
+
+    ensureProfileOnStart();
   </script>
 </body>
 </html>
