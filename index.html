@@ -109,7 +109,6 @@
       z-index:9999;
     }
     .overlay header{padding-top:18px}
-    .mutedLink{color:var(--muted); text-decoration:underline; cursor:pointer}
   </style>
 </head>
 <body>
@@ -323,8 +322,8 @@
 
       <div class="two" style="margin-top:10px">
         <div>
-          <div class="label">Revolut Premium</div>
-          <input id="autoRevolut" type="number" inputmode="decimal" />
+          <div class="label">Subscriptions</div>
+          <input id="autoSubscriptions" type="number" inputmode="decimal" />
         </div>
         <div>
           <div class="label">Гражданска – сума (на 3 месеца)</div>
@@ -586,15 +585,36 @@
         settings:{ activeYM: nowYM, goal: 0, startSavings: 0 },
         plan:{ salary: 0, vouchers: 0 },
         auto:{
-          utilities: 0, phone: 0, revolut: 0,
+          utilities: 0, phone: 0, subscriptions: 0,
           fuelPlan: 0, foodPlan: 0, includePlansAsAuto: "no",
           insuranceAmount: 0, insuranceAnchorYM: nowYM,
           spendingLimit: 0, autoSaveTarget: 0
         },
         car:{ limit: 0, fuelLimit: 0 },
-        credits:[],   // ✅ няма кредити
+        credits:[],
         tx:[]
       };
+    }
+
+    // ✅ MIGRATION: revolut -> subscriptions (за стари профили)
+    function migrateStateIfNeeded(s){
+      if(!s || !s.auto) return s;
+      if(typeof s.auto.subscriptions !== "number") {
+        // ако липсва subscriptions, но има revolut
+        if(typeof s.auto.revolut === "number") {
+          s.auto.subscriptions = s.auto.revolut;
+          delete s.auto.revolut;
+        } else {
+          s.auto.subscriptions = 0;
+        }
+      } else {
+        // ако има и двете по някаква причина - merge
+        if(typeof s.auto.revolut === "number" && s.auto.revolut > 0 && (!s.auto.subscriptions || s.auto.subscriptions === 0)){
+          s.auto.subscriptions = s.auto.revolut;
+        }
+        delete s.auto.revolut;
+      }
+      return s;
     }
 
     let activeProfile = null; // {id,name,pinHash?}
@@ -766,6 +786,9 @@
         saveStateForProfile(id, s);
       }
 
+      s = migrateStateIfNeeded(s);
+      saveStateForProfile(id, s);
+
       const today = new Date().toISOString().slice(0,10);
       p.lastUsed = today;
       saveProfiles(profiles);
@@ -778,7 +801,7 @@
       render();
     }
 
-    // Import from overlay (creates profile if needed)
+    // Import from overlay
     btnOverlayImport.onclick = ()=> overlayImportFile.click();
     overlayImportFile.onchange = async ()=>{
       const f = overlayImportFile.files?.[0];
@@ -792,7 +815,6 @@
         if(!parsed.state.settings || !parsed.state.auto || !Array.isArray(parsed.state.tx) || !Array.isArray(parsed.state.credits)) throw new Error("bad");
 
         const profiles = loadProfiles();
-
         const importedName = (parsed.profile.name || "Импорт").trim();
         const id = uuid();
         const p = {
@@ -804,7 +826,9 @@
         };
         profiles.push(p);
         saveProfiles(profiles);
-        saveStateForProfile(id, parsed.state);
+
+        const migrated = migrateStateIfNeeded(parsed.state);
+        saveStateForProfile(id, migrated);
 
         await activateProfile(id);
         hideOverlay();
@@ -837,11 +861,11 @@
     }
 
     // =========================
-    // APP (same UI/logic)
+    // APP
     // =========================
     const cats = {
       income:["Заплата","Ваучери","Друг доход"],
-      expense:["Храна (кеш)","Гориво","Комунални","Телефон","Revolut","Гражданска","Покупки","Излизане","Кола: Ремонти","Кола: Такси","Кола: Винетка/Паркинг","Друго"],
+      expense:["Храна (кеш)","Гориво","Комунални","Телефон","Subscriptions","Гражданска","Покупки","Излизане","Кола: Ремонти","Кола: Такси","Кола: Винетка/Паркинг","Друго"],
       saving:["Аварийни","Буфер","Дългосрочни"]
     };
 
@@ -909,7 +933,7 @@
 
     const autoUtilities = byId("autoUtilities");
     const autoPhone = byId("autoPhone");
-    const autoRevolut = byId("autoRevolut");
+    const autoSubscriptions = byId("autoSubscriptions");
     const autoInsuranceAmount = byId("autoInsuranceAmount");
     const autoInsuranceAnchor = byId("autoInsuranceAnchor");
     const limitSpending = byId("limitSpending");
@@ -1009,7 +1033,7 @@
       const list=[];
       if(Number(a.utilities)>0) list.push({name:"Комунални", amt:Number(a.utilities), cat:"Комунални"});
       if(Number(a.phone)>0) list.push({name:"Телефон", amt:Number(a.phone), cat:"Телефон"});
-      if(Number(a.revolut)>0) list.push({name:"Revolut Premium", amt:Number(a.revolut), cat:"Revolut"});
+      if(Number(a.subscriptions)>0) list.push({name:"Subscriptions", amt:Number(a.subscriptions), cat:"Subscriptions"});
       if(Number(a.insuranceAmount)>0 && insuranceDue(ymStr)) list.push({name:"Гражданска (3м)", amt:Number(a.insuranceAmount), cat:"Гражданска"});
       if(a.includePlansAsAuto==="yes"){
         if(Number(a.fuelPlan)>0) list.push({name:"Гориво (план)", amt:Number(a.fuelPlan), cat:"Гориво"});
@@ -1093,7 +1117,7 @@
       const chips=[
         ["Комунални", fmt.format(Number(a.utilities)||0)],
         ["Телефон", fmt.format(Number(a.phone)||0)],
-        ["Revolut", fmt.format(Number(a.revolut)||0)],
+        ["Subscriptions", fmt.format(Number(a.subscriptions)||0)],
         ["Гражданска/3м", fmt.format(Number(a.insuranceAmount)||0)+" • "+(a.insuranceAnchorYM?ymToLabel(a.insuranceAnchorYM):"—")]
       ];
       chips.forEach(([t,v])=>{
@@ -1319,13 +1343,12 @@
       const active=state.settings.activeYM;
       monthPill.textContent=ymToLabel(active);
 
-      // forms
       setGoal.value = state.settings.goal ?? 0;
       setStart.value = state.settings.startSavings ?? 0;
 
       autoUtilities.value = state.auto.utilities ?? 0;
       autoPhone.value = state.auto.phone ?? 0;
-      autoRevolut.value = state.auto.revolut ?? 0;
+      autoSubscriptions.value = state.auto.subscriptions ?? 0;
       autoInsuranceAmount.value = state.auto.insuranceAmount ?? 0;
       autoInsuranceAnchor.value = state.auto.insuranceAnchorYM || ymNow();
       limitSpending.value = state.auto.spendingLimit ?? 0;
@@ -1400,7 +1423,7 @@
     btnSaveAuto.onclick=()=>{
       state.auto.utilities = Number(autoUtilities.value)||0;
       state.auto.phone = Number(autoPhone.value)||0;
-      state.auto.revolut = Number(autoRevolut.value)||0;
+      state.auto.subscriptions = Number(autoSubscriptions.value)||0;
       state.auto.insuranceAmount = Number(autoInsuranceAmount.value)||0;
       state.auto.insuranceAnchorYM = autoInsuranceAnchor.value || ymNow();
       state.auto.spendingLimit = Number(limitSpending.value)||0;
@@ -1506,7 +1529,10 @@
           lastUsed: ""
         });
         saveProfiles(profiles);
-        saveStateForProfile(id, parsed.state);
+
+        const migrated = migrateStateIfNeeded(parsed.state);
+        saveStateForProfile(id, migrated);
+
         await activateProfile(id);
         alert("Импорт успешно ✅");
       }catch(e){
